@@ -142,5 +142,4 @@ belong in this repo (see [notes/repo-principles.md](notes/repo-principles.md)).
 
 ## License
 
-Not yet licensed. Open an issue if you want to use this and a license will be
-added.
+[MIT](LICENSE).
