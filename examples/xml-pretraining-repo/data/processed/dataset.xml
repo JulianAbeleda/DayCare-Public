@@ -1,0 +1,6 @@
+<dataset id="daycare-corpus-v0">
+  <split name="train" path="train.xml" sha256="TODO"/>
+  <split name="validation" path="validation.xml" sha256="TODO"/>
+  <split name="holdout" path="holdout.xml" sha256="TODO"/>
+  <source-policy>Keep final promotion gates out of train.</source-policy>
+</dataset>

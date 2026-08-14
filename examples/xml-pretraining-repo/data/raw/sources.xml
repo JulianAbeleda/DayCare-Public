@@ -1,0 +1,5 @@
+<sources>
+  <source id="daycare-docs" type="repo" path="../../../research"/>
+  <source id="boltbeam-ledgers" type="repo" path="TODO"/>
+  <source id="chat-traces" type="export" path="TODO"/>
+</sources>

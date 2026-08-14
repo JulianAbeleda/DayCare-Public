@@ -1,0 +1,8 @@
+flowchart LR
+  source["Source data"] --> flat_xml["Flat XML artifact"]
+  flat_xml --> transformed_xml["Transformed XML"]
+  transformed_xml --> audited_checkpoint["Audited checkpoint"]
+  audited_checkpoint --> gguf["GGUF"]
+  audited_checkpoint --> hf["HF repo files"]
+  audited_checkpoint --> onnx["ONNX"]
+  audited_checkpoint --> runtime["Runtime-specific files"]

@@ -1,0 +1,8 @@
+<tokenizer id="daycare-tokenizer-v0" type="bpe">
+  <vocab path="../artifacts/tokenizer/vocab.blob" sha256="TODO"/>
+  <merges path="../artifacts/tokenizer/merges.blob" sha256="TODO"/>
+  <special-tokens>
+    <token name="eos" id="TODO"/>
+    <token name="bos" id="TODO"/>
+  </special-tokens>
+</tokenizer>

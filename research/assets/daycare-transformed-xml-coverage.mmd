@@ -1,0 +1,18 @@
+flowchart TB
+  transformed_xml["Transformed XML"]
+
+  transformed_xml --> data_manifest["Data manifest"]
+  transformed_xml --> tokenizer_manifest["Tokenizer manifest"]
+  transformed_xml --> arch_manifest["Architecture manifest"]
+  transformed_xml --> training_plan["Training plan"]
+  transformed_xml --> checkpoint_ledger["Checkpoint ledger"]
+  transformed_xml --> tensor_index["Tensor index"]
+  transformed_xml --> eval_audit["Eval and audit records"]
+  transformed_xml --> export_map["Export map"]
+  transformed_xml --> blob_index["Binary blob index"]
+
+  blob_index --> data_payloads["Dataset shards"]
+  blob_index --> tokenizer_blobs["Tokenizer blobs"]
+  blob_index --> weight_tensors["Weight tensors"]
+
+  transformed_xml <--> inspector["Inspect / validate / audit"]

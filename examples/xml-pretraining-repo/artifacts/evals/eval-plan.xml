@@ -1,0 +1,5 @@
+<eval-plan id="daycare-eval-v0">
+  <probe name="schema_validity"/>
+  <probe name="evidence_discipline"/>
+  <probe name="next_action_choice"/>
+</eval-plan>

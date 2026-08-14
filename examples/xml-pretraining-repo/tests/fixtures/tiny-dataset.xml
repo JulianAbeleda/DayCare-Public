@@ -1,0 +1,6 @@
+<dataset id="tiny">
+  <record id="r0">
+    <input>hello</input>
+    <target>world</target>
+  </record>
+</dataset>

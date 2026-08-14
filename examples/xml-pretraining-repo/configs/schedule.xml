@@ -1,0 +1,4 @@
+<schedule type="cosine">
+  <warmup-steps>TODO</warmup-steps>
+  <max-steps>TODO</max-steps>
+</schedule>

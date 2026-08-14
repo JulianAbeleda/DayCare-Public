@@ -1,0 +1,31 @@
+# Local scratch
+.DS_Store
+*.tmp
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Do not store model/training artifacts here
+models/
+checkpoints/
+datasets/
+outputs/
+runs/
+wandb/
+
+# Live model state (runtime data, not source)
+state/
+*.subject.xml
+
+# Train-only tinygrad (vendored upstream; fetch via setup_trainer.sh)
+daycare/nursery/vendor/
+
+# Trained LoRA adapters (runtime artifacts)
+state/adapters/
+
+# Imported model packages (runtime data)
+*.xpkg/
+
+# Local test venv (pytest; the package itself needs no third-party deps)
+.venv/

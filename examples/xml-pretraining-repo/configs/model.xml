@@ -1,0 +1,5 @@
+<model id="daycare-small-v0">
+  <architecture family="llama" layers="24" hidden-size="2048" heads="16"/>
+  <context length="4096"/>
+  <tokenizer ref="tokenizer.xml"/>
+</model>

@@ -1,0 +1,5 @@
+<runtime-targets>
+  <target name="native-xml" status="experimental"/>
+  <target name="hf" status="export"/>
+  <target name="gguf" status="export"/>
+</runtime-targets>
