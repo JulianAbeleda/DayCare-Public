@@ -143,3 +143,14 @@ belong in this repo (see [notes/repo-principles.md](notes/repo-principles.md)).
 ## License
 
 [MIT](LICENSE).
+
+## Research records
+
+What was learned, with the numbers, the predictions written before each run, and the runs that were rejected:
+
+- [LoRA training standard](research/lora-training-standard.md): the rules, each one paid for by a rejected run
+- Nemotron 3 Nano 4B tool calling: [the run that aced the quiz and was rejected](research/nemotron-tool-calling/RESULTS.md), [the capability check that confirmed the rejection](research/nemotron-general-capability/RESULTS.md), [the adopted run](research/nemotron-tool-selection/RESULTS.md), [category metadata](research/nemotron-category-metadata/RESULTS.md), [tool retrieval](research/nemotron-tool-retrieval/RESULTS.md), [retrieval training, rejected](research/nemotron-retrieval-training/RESULTS.md)
+- [XML model package](research/xml-pretraining-format.md), with a working scaffold in [`examples/daycare-model.xpkg`](examples/daycare-model.xpkg)
+- [Bibliography](research/bibliography.md): the papers this stack was built from
+
+The hybrid Mamba-2 / attention model these runs trained through is [`daycare/model/nemotron_h.py`](daycare/model/nemotron_h.py).

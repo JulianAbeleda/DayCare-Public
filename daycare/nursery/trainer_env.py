@@ -1,6 +1,6 @@
 """DayCare's train-only tinygrad.
 
-The split (see research/catastrophic-forgetting.md):
+The split (see research/spryt.md, research/name-learning-scope.md):
 
     upstream tinygrad   everything -- too broad to depend on wholesale
     DayCare (this)      TRAIN only: a pinned upstream copy for autograd + optim

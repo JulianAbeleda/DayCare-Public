@@ -1,0 +1,4 @@
+<tokenizer id="daycare-tokenizer-v0" type="bpe">
+  <vocab path="vocab.blob"/>
+  <merges path="merges.blob"/>
+</tokenizer>

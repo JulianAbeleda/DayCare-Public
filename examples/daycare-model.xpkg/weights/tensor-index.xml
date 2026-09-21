@@ -1,0 +1,8 @@
+<tensors>
+  <tensor name="layers.0.attn.q_proj.weight"
+          dtype="F16"
+          shape="2048,2048"
+          file="tensors-0000.bin"
+          offset="0"
+          length="8388608"/>
+</tensors>

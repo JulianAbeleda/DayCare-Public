@@ -1,0 +1,12 @@
+<model-package id="daycare-model" version="0.1">
+  <dataset ref="data/dataset.xml"/>
+  <training ref="training/plan.xml"/>
+  <tokenizer ref="tokenizer/tokenizer.xml"/>
+  <weights ref="weights/tensor-index.xml"/>
+  <evals ref="evals/eval-plan.xml"/>
+  <compatibility>
+    <target name="hf" map="compatibility/hf-map.xml"/>
+    <target name="gguf" map="compatibility/gguf-map.xml"/>
+    <target name="onnx" map="compatibility/onnx-map.xml"/>
+  </compatibility>
+</model-package>

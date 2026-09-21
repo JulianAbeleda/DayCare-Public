@@ -1,0 +1,3 @@
+<compatibility-map target="onnx">
+  <status>placeholder</status>
+</compatibility-map>

@@ -146,7 +146,7 @@
 - VL-JEPA:
   <https://arxiv.org/abs/2512.10942>
 
-## model Lineage (artificial-life prior art)
+## Spryt Lineage (artificial-life prior art)
 
 - Grand and Cliff, "Creatures: Entertainment Software Agents with Artificial
   Life":
@@ -203,7 +203,7 @@
   <https://github.com/OpenRLHF/OpenRLHF>
   <https://openrlhf.readthedocs.io/>
 
-## Activation Steering & Interpretability
+## Activation Steering & Interpretability (Brainwave prior art)
 
 - Rimsky, Gabrieli, Schulz, Tong, Hubinger, Turner — Steering Llama 2 via Contrastive
   Activation Addition (CAA), 2023:

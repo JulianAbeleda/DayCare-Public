@@ -1,5 +1,10 @@
 # Branch layout: `main` ⊂ `dev` ⊂ `exp`
 
+Work begins on `exp`. What proves useful is reduced to reusable development
+apparatus on `dev` and the smallest durable product or research conclusion on
+`main`. Promotion is curation: experiments and their scaffolding do not move
+inward wholesale.
+
 DayCare follows the same three-branch convention as BoltBeam and
 tinygrad-arkey. The relationship is **containment by content category**, not a
 promotion pipeline. Work does not graduate from `exp` to `dev` to `main`;
@@ -107,8 +112,25 @@ Movement inward is not a merge. Promoting something from `exp` to `main` means
 deciding it was product all along; it lands as an ordinary commit on `main`
 that then flows outward like any other.
 
-## What this is not
+## Direction matters
 
-Not a review process, an approval gate, or a release train. It is a rule about
-**what kind of thing** each branch holds, so that the trunk stays the product
-and the apparatus has somewhere legitimate to live.
+The human workflow moves from experiment toward survival:
+
+```
+exp --curate--> dev --curate--> main
+```
+
+Git synchronization moves in the opposite direction so the outer branches stay
+supersets:
+
+```
+main --merge--> dev --merge--> exp
+```
+
+This is a rule about **what kind of thing** each branch holds. It keeps the
+trunk lean while preserving the apparatus and experiments needed to explain it.
+
+Run `python3 sz.py` on every branch to keep those surfaces visible. The durable
+product budget applies only to runnable code under `daycare/` and `examples/`;
+tests, tooling, experiments, and documentation are reported and bounded
+separately so moving code cannot hide growth.
