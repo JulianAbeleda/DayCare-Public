@@ -133,17 +133,6 @@ The reasoning behind the code, under `research/`:
 - [Model Archaeology](research/model-archaeology.md) · [Pretraining History](research/pretraining-history.md)
 - [Open-Source Tooling](research/open-source-tooling.md) · [Bibliography](research/bibliography.md)
 
-## Status
-
-Research code, single-maintainer, tested at 0.6B on one GPU. The measurement
-discipline is the mature part; the training paths are small and readable rather
-than fast or general. No model weights, datasets, training outputs, or run state
-belong in this repo (see [notes/repo-principles.md](notes/repo-principles.md)).
-
-## License
-
-[MIT](LICENSE).
-
 ## Research records
 
 What was learned, with the numbers, the predictions written before each run, and the runs that were rejected:
@@ -154,3 +143,14 @@ What was learned, with the numbers, the predictions written before each run, and
 - [Bibliography](research/bibliography.md): the papers this stack was built from
 
 The hybrid Mamba-2 / attention model these runs trained through is [`daycare/model/nemotron_h.py`](daycare/model/nemotron_h.py).
+
+## Status
+
+Research code, single-maintainer, tested at 0.6B on one GPU. The measurement
+discipline is the mature part; the training paths are small and readable rather
+than fast or general. No model weights, datasets, training outputs, or run state
+belong in this repo (see [notes/repo-principles.md](notes/repo-principles.md)).
+
+## License
+
+[MIT](LICENSE).
