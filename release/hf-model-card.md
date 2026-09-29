@@ -5,10 +5,12 @@ license_link: https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia
 base_model: nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16
 base_model_relation: adapter
 pipeline_tag: text-generation
+library_name: peft
 language:
   - en
 tags:
   - lora
+  - peft
   - gguf
   - llama.cpp
   - reinforcement-learning
@@ -42,18 +44,27 @@ regression nor a gain.
 | File | Format | Use |
 |---|---|---|
 | `adapter.gguf` | llama.cpp LoRA GGUF (f32 A/B, `adapter.lora.alpha` = 64) | `llama-server --lora adapter.gguf` on a GGUF of the base model |
+| `adapter_model.safetensors` + `adapter_config.json` | PEFT LoRA (f32 A/B, `r` = 32, `lora_alpha` = 64) | `PeftModel.from_pretrained(base, "JulianAbeleda/nemotron-3-nano-4b-arkey")` with `transformers` |
 | `adapter-raw.npz` | NumPy archive of the float32 LoRA factors (`lora.{0,1}.{A,B}`) | framework-neutral copy of the same weights, bit-identical to what was trained |
 
-The adapter targets `blk.41.ffn_up.weight` (factors `lora.0`) and `blk.41.ffn_down.weight` (`lora.1`), the MLP of
-the final block (llama.cpp tensor names, architecture `nemotron_h`). Rank 32, alpha 64 (scale alpha/rank = 2),
-1,003,520 parameters. The delta is `W + (alpha/r) * B @ A`.
+The adapter targets the MLP of the final block, layer 41: `blk.41.ffn_up.weight` / `blk.41.ffn_down.weight` in
+llama.cpp (architecture `nemotron_h`), `backbone.layers.41.mixer.up_proj` / `.down_proj` in the Hugging Face
+checkpoint (`model.layers.41...` in transformers 5). Rank 32, alpha 64 (scale alpha/rank = 2), 1,003,520 parameters.
+The delta is `W + (alpha/r) * B @ A`. All three files hold bit-identical float32 factors.
 
-**No PEFT / safetensors export exists.** The DayCare code exports only the lossless XML checkpoint (`adapter.xml`)
-and the llama.cpp LoRA GGUF (`daycare/artifact/lora_gguf.py`). A PEFT conversion would need the GGUF-to-HF module-name
-mapping for Nemotron-H and a parity check. It has not been written or tested, so this adapter is not usable with
-`transformers`/`peft` as released.
+The PEFT files were produced from `adapter.gguf` by
+[`daycare/artifact/peft_export.py`](https://github.com/JulianAbeleda/DayCare-Public/blob/main/daycare/artifact/peft_export.py)
+(the factors are copied, not converted: llama.cpp's `lora_a`/`lora_b` have PEFT's `lora_A`/`lora_B` shapes and the same
+alpha/r scale). Checked on the real model: the base weights under the llama.cpp and HF names are bit-equal (no
+permutation), and on 5 chat prompts transformers 5.17 + peft 0.21 (fp32) reproduced `llama-server --lora` (BF16 GGUF):
+greedy continuations identical for 32/32 tokens on 5/5 prompts (3 of which differ from the base model's), the
+adapter's shift of the top-20 next-token log-probabilities agreed within 0.013 nats (correlation >= 0.9998; the shift
+itself is up to 0.74 nats), and the remaining gap to llama.cpp (<= 0.11 nats) is the same with and without the
+adapter (fp32 vs BF16 kernels).
 
 ## How to use
+
+llama.cpp (the stack the adapter was trained for and evaluated on):
 
 ```bash
 # convert the base model once (llama.cpp)
@@ -61,6 +72,27 @@ python convert_hf_to_gguf.py NVIDIA-Nemotron-3-Nano-4B-BF16 --outtype bf16 --out
 
 llama-server -m nemotron-3-nano-4b-bf16.gguf --lora adapter.gguf --jinja -ngl 99 -c 65536
 ```
+
+transformers + PEFT:
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import PeftModel
+
+base_id = "nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16"
+tok = AutoTokenizer.from_pretrained(base_id)
+model = AutoModelForCausalLM.from_pretrained(base_id, dtype=torch.bfloat16, device_map="cuda")
+model = PeftModel.from_pretrained(model, "JulianAbeleda/nemotron-3-nano-4b-arkey")
+
+messages = [{"role": "user", "content": "What is 17 * 23?"}]
+ids = tok.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt", return_dict=False).to(model.device)
+print(tok.decode(model.generate(ids, max_new_tokens=512, do_sample=False)[0, ids.shape[1]:]))
+```
+
+The PEFT path was tested with transformers 5.17 (native Nemotron-H, no `trust_remote_code`) and peft 0.21. The base
+repo's own remote code (`trust_remote_code=True`, transformers 4.x) needs `mamba-ssm` and was not tested; its module
+names match the adapter's `target_modules` (`up_proj`, `down_proj`, `layers_to_transform` = [41]).
 
 Tested with llama.cpp build b9592 on the BF16 GGUF (sha256 `2126a5e8056f4178200f3c30dcac11ac0ebae200fdb8d2b8ff86e2fa2930fcb8`),
 thinking on (the chat template's default). Quantized bases were not tested. Serving parity was checked against the
