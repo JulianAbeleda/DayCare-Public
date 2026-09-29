@@ -29,3 +29,5 @@ state/adapters/
 
 # Local test venv (pytest; the package itself needs no third-party deps)
 .venv/
+build/
+*.egg-info/
