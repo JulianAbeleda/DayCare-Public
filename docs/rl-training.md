@@ -56,8 +56,7 @@ the model digest, so a different conversion shows up in the run record. No weigh
 
 Episodes run `calculate` calls through GameTerm's own calculator (argument normalisation, then evaluation with
 [fend](https://github.com/printfn/fend)). The runner binary (`gameterm-calculate-runner`) is built from a GameTerm
-tree that is **not public yet**. The public [GameTerm](https://github.com/JulianAbeleda/gameterm) repository does not
-contain it (checked 2026-09-28). A substitute must implement this interface:
+tree that is **not public**. A substitute must implement this interface:
 
 - an executable that takes no arguments and stays alive for the whole run;
 - **stdin:** one line per call, holding the `calculate` tool's arguments as compact JSON, e.g.

@@ -5,7 +5,7 @@ A small, dependency-light training stack for local language models, built on
 adapter out, with a measurement discipline that refuses to call an unproven run a success.
 
 **Current focus:** can a small local model use tools well? The active work trains **Nemotron 3 Nano 4B** (thinking
-on) with RLOO on the turn *after* a tool call, inside [GameTerm](https://github.com/JulianAbeleda/gameterm): the
+on) with RLOO on the turn *after* a tool call, inside GameTerm: the
 calculator returned a result, or rejected the call, or the policy refused a file read. What does the model do next?
 The full record, including every failed run, is in the
 **[post-tool RL index](research/post-tool-rl-index.md)**.

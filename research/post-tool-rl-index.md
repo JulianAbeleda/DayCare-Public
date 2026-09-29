@@ -1,7 +1,7 @@
 # Post-tool RL: the record, in order
 
 Can a small local model use a tool's result well? This series trains **Nemotron 3 Nano 4B** (thinking on) with
-RLOO on the turn *after* a tool call inside [GameTerm](https://github.com/JulianAbeleda/gameterm), a terminal app
+RLOO on the turn *after* a tool call inside GameTerm, a terminal app
 with a built-in assistant. The tool is a calculator; the questions are word problems and Countdown puzzles; later
 runs add refused file/terminal calls ("blocked"). Sampling and training both run on one stack,
 [tinygrad-arkey](https://github.com/JulianAbeleda/tinygrad-arkey) (`exp` branch). The experiments used a beta build
