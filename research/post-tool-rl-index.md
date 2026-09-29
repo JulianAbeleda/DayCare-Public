@@ -1,11 +1,35 @@
 # Post-tool RL: the record, in order
 
 Can a small local model use a tool's result well? This series trains **Nemotron 3 Nano 4B** (thinking on) with
-RLOO on the turn *after* a tool call inside GameTerm, a terminal app
+RLOO on the turn *after* a tool call inside [GameTerm](https://gameterm.arkey.ai), a terminal app
 with a built-in assistant. The tool is a calculator; the questions are word problems and Countdown puzzles; later
 runs add refused file/terminal calls ("blocked"). Sampling and training both run on one stack,
 [tinygrad-arkey](https://github.com/JulianAbeleda/tinygrad-arkey) (`exp` branch). The experiments used a beta build
 of GameTerm that is not public.
+
+## Why the post-tool turn
+
+Calling the calculator was already workable, and tool selection had its own track. Relaying a result that answers
+the question worked too. The weak spot was the turn after a result that does not settle the question: a miss or a
+rejection. Thinking helps there but does not close the gap, so that turn is what this series trains. Stock model
+numbers ([write-up](../docs/writeup.md#why-the-post-tool-turn)):
+
+- **The call (thinking on).** On 904 word problems, the first turn was a `calculate` call 687 times, and the calculator
+  accepted 667 of them. On 205 more it answered correctly without the tool ([run 4 tasks](rloo-posttool-calculator-r4.md)).
+  On GameTerm's retention suite, selection is 15/16 with thinking on and 11/16 with it off, a small sample
+  ([record](countdown-thinking-e2e.md)).
+- **After the result** ([post-result probe](post-result-probe.md), GameTerm's wire format, 64 samples per cell).
+  A hitting result is relayed 63/64 with thinking off or on. After a miss it is right 2/64 off and 33/64 on (12 and
+  42 with a bare `expr = value` result). After a rejection it is right 5/64 off and 16/64 on (0 and 15 bare).
+- **Thinking** makes Countdown end to end 46/64 instead of 15/64, but calculator episodes fall from 31 to 4. The gain
+  comes from reasoning, not from calling ([record](countdown-thinking-e2e.md)). Every run here uses thinking on.
+- **So** each episode starts from the model's own call and GameTerm's real reply. The reward scores only the final
+  answer, and calls are neither rewarded nor penalized. The earlier Countdown RLOO trained the first turn and scored
+  any tool call 0. It did not beat stock.
+- **Tool selection** was a separate, earlier track, run with thinking off. There, GameTerm's 35-tool request cut
+  stock selection to 45.0%, and a rank-4 SFT adapter took it to 94.7%
+  ([tool selection](nemotron-tool-selection/RESULTS.md)). Thinking on was not measured there, and that adapter is not
+  used here.
 
 Every run follows the [RL run playbook](../docs/rl-run-playbook.md): hypothesis and gates written and committed
 before the first counted update, a bit-exact save/reload check before the long run, predeclared stop triggers, a

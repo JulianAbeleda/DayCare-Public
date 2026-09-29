@@ -1,7 +1,7 @@
 # RL training: RLOO on the post-tool turn
 
 The code behind the [post-tool RL series](../research/post-tool-rl-index.md): one-stack RLOO on
-Nemotron 3 Nano 4B, sampling and training in the same tinygrad process, scored on the turn after a GameTerm tool
+Nemotron 3 Nano 4B, sampling and training in the same tinygrad process, scored on the turn after a [GameTerm](https://gameterm.arkey.ai) tool
 call. The adopted recipe is [run 5](../research/rloo-posttool-calculator-r5.md). This page lists the modules, the
 external pieces they need, and the commands. It also says which inputs are **not** published.
 

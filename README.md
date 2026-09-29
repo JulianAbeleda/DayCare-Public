@@ -5,7 +5,7 @@ A small, dependency-light training stack for local language models, built on
 adapter out, with a measurement discipline that refuses to call an unproven run a success.
 
 **Current focus:** can a small local model use tools well? The active work trains **Nemotron 3 Nano 4B** (thinking
-on) with RLOO on the turn *after* a tool call, inside GameTerm: the
+on) with RLOO on the turn *after* a tool call, inside [GameTerm](https://gameterm.arkey.ai): the
 calculator returned a result, or rejected the call, or the policy refused a file read. What does the model do next?
 The full record, including every failed run, is in the
 **[post-tool RL index](research/post-tool-rl-index.md)**.
@@ -29,6 +29,11 @@ The code is small. The part worth copying is how a run earns the right to be bel
    variant.
 
 ## Post-tool RL status
+
+Why this turn: calling the calculator was already workable (tool selection was a separate adapter track), and
+relaying a result that answers the question works. The weak spot is the turn after a result that does not settle
+it. With thinking on, stock is right 33/64 after a miss and 16/64 after a rejection, against 63/64 for relay. So
+training scores only the answer that follows the result ([why](docs/writeup.md#why-the-post-tool-turn)).
 
 | Run | Outcome |
 |---|---|

@@ -13,6 +13,72 @@ gates you declare in advance tell you whether it worked.
 
 ![Run 5 adapter minus stock, with 95% CIs](assets/run5-results.svg)
 
+## Why the post-tool turn
+
+In [GameTerm](https://gameterm.arkey.ai), the stock 4B could already call the calculator well enough to work with, and
+tool selection had been handled by a separate adapter track. Relaying a result that answers the question also worked.
+The weak spot was the turn after a result that does *not* settle the question: a miss, or a call the app rejected.
+Thinking helps a lot there but does not close the gap, so that turn is what this RL trains. All numbers below are
+for the stock model, with no adapter.
+
+**Calling was workable (thinking on).** In GameTerm's full 35-tool request, one sample per task at temperature 1.0,
+the stock model's first turn on 904 word problems was a `calculate` call 687 times. The calculator accepted 667 of
+those calls and refused 20. On 205 more tasks it answered correctly without the tool, and only 4 went to another tool
+(stock harvest for [run 4's tasks](../research/rloo-posttool-calculator-r4.md)). On GameTerm's frozen 132-item suite,
+the first call picks the right tool on 15/16 selection items with thinking on and 11/16 with it off. That is a
+modest gain, measured on only 16 items ([record](../research/countdown-thinking-e2e.md)).
+
+**The weak spot is after the result.** The [post-result probe](../research/post-result-probe.md) fills in one
+calculator call and its result, then samples only the next turn. It uses 16 held-out Countdown tasks x 4 seeds, 64
+samples per cell and 4,096 tokens. The result is shown either as bare `expr = value` or in GameTerm's real JSON wire
+envelope:
+
+| Correct next turn, of 64 | Off, bare | Off, wire | On, bare | On, wire |
+|---|---:|---:|---:|---:|
+| hit: the result is the answer (relay) | 64 | 63 | 64 | 63 |
+| miss: the result is not the target | 12 | **2** | 42 | **33** |
+| rejected: GameTerm refused the call | 0 | 5 | 15 | 16 |
+
+Relay works either way. After a miss or a rejection, thinking helps a lot, and the task-clustered CIs exclude 0 (bare format). It
+still leaves 31 of 64 miss samples and 48 of 64 rejection samples wrong in the wire format. With thinking off, the
+wire envelope makes the miss worse: 21 of 64 samples answered with the expression that had just missed.
+
+On the word-problem training states, with thinking on
+([stock headroom](../research/rloo-posttool-calculator.md)), held-out pass@1 is 0.99 for relay, against 0.83 for
+repair, 0.58 for miss and 0.34 for the historical empty-answer states. On those last three, pass@8 is 17 to 41 points
+above pass@1. The stock policy can already produce the right turn, but not reliably. The main failure is a turn that
+reasons until the 4,096-token cap and gives no answer.
+
+**Thinking on is the baseline, but its big win is reasoning, not calling.** End to end through GameTerm on the same
+16 Countdown tasks, stock is right **46/64** with thinking on and **15/64** with it off (paired 95% CI of the gain
++35.9 to +60.9 points). Yet the episodes that called the calculator fell from 31 to 4. Thinking replaced tool use on
+Countdown rather than improving it. Thinking on also kept every plain answer (40/40) on the retention suite
+([record](../research/countdown-thinking-e2e.md)). Every run here uses thinking on.
+
+**What that means for training.**
+
+- Start each episode after the call: the model's own call (or a constructed one) and GameTerm's real reply, in the
+  wire format, with thinking on.
+- Reward only the final answer after the result. Tool calls are neither rewarded nor penalized. The earlier Countdown
+  RLOO runs did the opposite: they trained the first turn, where a turn that called a tool scored 0. That trained
+  against tool use, and neither run beat stock on the holdout (-2.7 and -0.7 points).
+- Do not teach "call again after a miss" from solver-written traces. An SFT adapter trained that way called again on
+  64/64 miss samples and answered none correctly ([probe](../research/post-result-probe.md)).
+
+**How this relates to the tool-selection track.** The large first-call fix on record came from an adapter, not from
+thinking. In a separate, earlier track with thinking **off**
+([tool selection](../research/nemotron-tool-selection/RESULTS.md)), GameTerm's long 35-tool request cut stock selection
+to 45.0% (144/320; calculate 22/40), against 82.2% with a short tool list. A rank-4 SFT adapter raised it to 94.7%
+(303/320). Thinking-on selection on that 320-item suite was never measured. Even so, the calls the model made were well
+formed: across both arms, all 904 proposed first calls passed their JSON schema, and all 136 `calculate` calls ran in
+GameTerm's calculator and gave the right value. That adapter is not part of the post-tool work, which starts from the
+stock model with thinking on.
+
+So the precise claim is this: the post-tool track did not train tool calling, because calling was already workable
+and selection had its own track. It trains the turn after a result that does not settle the question. The public
+benchmarks below cannot isolate that turn. BFCL multi-turn failures mix call errors with result errors, and no
+thinking-off benchmark arm was run.
+
 ## Setup
 
 - **The app.** GameTerm, a terminal app with a built-in assistant served by llama.cpp's `llama-server`. The

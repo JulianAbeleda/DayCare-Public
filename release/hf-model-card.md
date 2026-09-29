@@ -25,7 +25,7 @@ tags:
 # nemotron-3-nano-4b-arkey
 
 A LoRA adapter for [NVIDIA Nemotron 3 Nano 4B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16), trained with
-RLOO on the tool turns of one app: GameTerm, a terminal app with a built-in assistant served by llama.cpp. The training
+RLOO on the tool turns of one app: [GameTerm](https://gameterm.arkey.ai), a terminal app with a built-in assistant served by llama.cpp. The training
 used one RTX 5090 and one inference stack (tinygrad samples and trains in the same process), and ran 102 updates in 86
 minutes. The training states match the app's prompts, tool schemas and tool rejections exactly.
 
