@@ -44,6 +44,10 @@ verdict scored exactly as declared, and no rescue runs. Failures are kept as fai
 - [Selection transfer](posttool-selection-transfer.md): run 4's G3 selection losses were a grader mismatch plus
   temperature-0 fragility, not a training failure; adds an out-of-distribution blocked probe and a
   composition-adjusted entropy trigger.
+- [Public benchmarks, run 5 vs stock](public-benchmarks-r5.md): BFCL v4 and NVIDIA's When2Call on llama-server
+  with `--lora`. **No measurable change**: BFCL non-live AST pooled +1.0 [-1.0, +3.0], multi_turn_base +4.5
+  [-1.5, +10.5]; When2Call macro F1 -2.5 [-6.4, +1.2]; tool hallucination +0.0 [-2.2, +2.2] at T=1 x 10 (a +7 at one
+  greedy sample was near-tie noise).
 - [G3 numeric diagnosis](posttool-g3-numeric-diagnosis.md): run 5's numeric loss is fragile (two of three items are
   coin flips at T=1), with one real reading shift; at T=1 on all 68 numeric items run 5 is level with stock.
 - [Probe entropy](probe-entropy-trigger.md): an entropy drift check on a fixed probe set, which batch composition
@@ -73,12 +77,14 @@ calculator call rate on numeric items fell 5.5 points [-9.4, -1.8], one real rea
 blocked gain below run 4's. Run 6, the replication, was stopped by its entropy trigger, so run 5 has not been
 reproduced on a second seed.
 
-The training code for this loop (`rloo_tinygrad`, `rloo_posttool`, the stop triggers and gates) is not yet in this
-repository; it will be published separately.
+Outside GameTerm, on public tool-use benchmarks, the adapter shows no measurable change against stock (neither a
+regression nor a gain): [public benchmarks](public-benchmarks-r5.md).
+
+The training code for this loop (`rloo_tinygrad`, `rloo_posttool`, the stop triggers and graders) is in this
+repository: [RL training](../docs/rl-training.md). The one-off gate and analysis scripts are not.
 
 ## Reading notes
 
 These are working records, lightly edited for publication. Paths such as `<runs>/`, `<scratch>/` and `<worktree>`
 stand for private run-output directories, unpublished analysis scripts and local checkouts. "DayCare (private
-commit)" marks a commit in the private development repository. Module names such as `daycare/nursery/rloo_posttool.py`
-refer to code that is not yet public. tinygrad-arkey revisions are public on its `exp` branch.
+commit)" marks a commit in the private development repository. tinygrad-arkey revisions are public on its `exp` branch.

@@ -47,6 +47,11 @@ numeric retention check (one greedy sample per item) failed by one item. A follo
 over all 68 numeric items), with known costs: a lower calculator call rate on numeric items (-5.5 points) and one
 real reading shift. Run 6 did not reproduce it on a second seed because its entropy trigger fired first.
 
+**Outside GameTerm**, on public tool-use benchmarks, the adapter shows no measurable change against stock, neither a
+regression nor a gain: BFCL v4 non-live AST pooled +1.0 [-1.0, +3.0], multi_turn_base +4.5 [-1.5, +10.5]; When2Call
+macro F1 -2.5 [-6.4, +1.2] ([public benchmarks](research/public-benchmarks-r5.md)). The short version of the whole
+series, with a chart: **[write-up](docs/writeup.md)**.
+
 ## What is in this repository
 
 - the base training pipeline (SFT + LoRA + before/after gate), the verdict vocabulary and campaign harness, the
@@ -159,8 +164,10 @@ failed a gate only in writing, recorded as an exception with its evidence and kn
 
 The reasoning behind the code, under `research/`:
 
+- **[Write-up](docs/writeup.md)**: one app, one inference stack, one GPU; the post-tool RL result in ~1,000 words
 - **[Post-tool RL index](research/post-tool-rl-index.md)**: runs 1-6, the side investigations and the literature
   report, in order
+- [Public benchmarks, run 5 vs stock](research/public-benchmarks-r5.md): BFCL v4 and When2Call
 - [Training Map](research/training-map.md) — the whole territory
 - [Fact vs Weight](research/fact-vs-weight.md) — what should never be trained
 - [State vs Weights](research/state-vs-weights.md) — where knowledge belongs
