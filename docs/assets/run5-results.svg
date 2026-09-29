@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 412" width="760" height="412" font-family="system-ui,-apple-system,Segoe UI,Helvetica,Arial,sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Run 5 adapter minus stock, percentage points, 95% CI</title>
+<desc id="d">GameTerm exam: repair +15.5 [11.2, 20.0], blocked +12.3 [7.7, 16.9], OOD blocked +10.6 [5.6, 15.4], blanks avoided +3.1 [2.1, 4.1], relay +0.8 [-0.6, 2.1]. Public: BFCL pooled +1.0 [-1.0, 3.0], irrelevance +1.7 [-1.7, 5.0], multi_turn_base +4.5 [-1.5, 10.5], When2Call macro F1 -2.5 [-6.4, 1.2], hallucination avoided 0.0 [-2.2, 2.2].</desc>
+<style>.bg{fill:#fcfcfb}.t1{fill:#0b0b0b}.t2{fill:#52514e}.grid{stroke:#e4e3df}.zero{stroke:#8a8984}.m{fill:#2a78d6;stroke:#fcfcfb;stroke-width:2}.w{stroke:#2a78d6;stroke-width:2;stroke-linecap:round}@media (prefers-color-scheme:dark){.bg{fill:#1a1a19}.t1{fill:#fff}.t2{fill:#c3c2b7}.grid{stroke:#383835}.zero{stroke:#8a8984}.m{fill:#3987e5;stroke:#1a1a19}.w{stroke:#3987e5}}</style>
+<rect class="bg" width="760" height="412" rx="8"/>
+<text class="t1" x="16" y="24" font-size="15" font-weight="600">Run 5 adapter minus stock Nemotron 3 Nano 4B (points, 95% CI; right = better)</text>
+<text class="t2" x="16" y="42" font-size="12">Large gains on the app it was trained for; no measurable change on public tool-use benchmarks.</text>
+<line class="grid" x1="300.0" x2="300.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="300.0" y="384" font-size="11" text-anchor="middle">-10</text>
+<line class="grid" x1="360.0" x2="360.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="360.0" y="384" font-size="11" text-anchor="middle">-5</text>
+<line class="zero" x1="420.0" x2="420.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="420.0" y="384" font-size="11" text-anchor="middle">0</text>
+<line class="grid" x1="480.0" x2="480.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="480.0" y="384" font-size="11" text-anchor="middle">+5</text>
+<line class="grid" x1="540.0" x2="540.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="540.0" y="384" font-size="11" text-anchor="middle">+10</text>
+<line class="grid" x1="600.0" x2="600.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="600.0" y="384" font-size="11" text-anchor="middle">+15</text>
+<line class="grid" x1="660.0" x2="660.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="660.0" y="384" font-size="11" text-anchor="middle">+20</text>
+<line class="grid" x1="720.0" x2="720.0" y1="56" y2="368" stroke-width="1"/>
+<text class="t2" x="720.0" y="384" font-size="11" text-anchor="middle">+25</text>
+<text class="t1" x="16" y="73.0" font-size="12" font-weight="600">GameTerm held-out exam</text>
+<text class="t2" x="28" y="99.0" font-size="12">Repair after a rejected calculator call</text>
+<line class="w" x1="554.4" x2="660.0" y1="95.0" y2="95.0"/>
+<circle class="m" cx="606.0" cy="95.0" r="5"><title>Repair after a rejected calculator call: +15.5 [+11.2, +20.0]</title></circle>
+<text class="t1" x="668.0" y="99.0" font-size="11">+15.5</text>
+<text class="t2" x="28" y="125.0" font-size="12">Blocked tool call handled correctly</text>
+<line class="w" x1="512.4" x2="622.8" y1="121.0" y2="121.0"/>
+<circle class="m" cx="567.6" cy="121.0" r="5"><title>Blocked tool call handled correctly: +12.3 [+7.7, +16.9]</title></circle>
+<text class="t1" x="630.8" y="125.0" font-size="11">+12.3</text>
+<text class="t2" x="28" y="151.0" font-size="12">Blocked, out-of-distribution probe</text>
+<line class="w" x1="487.2" x2="604.8" y1="147.0" y2="147.0"/>
+<circle class="m" cx="547.2" cy="147.0" r="5"><title>Blocked, out-of-distribution probe: +10.6 [+5.6, +15.4]</title></circle>
+<text class="t1" x="612.8" y="151.0" font-size="11">+10.6</text>
+<text class="t2" x="28" y="177.0" font-size="12">Blank answers avoided, relay family</text>
+<line class="w" x1="445.2" x2="469.2" y1="173.0" y2="173.0"/>
+<circle class="m" cx="457.2" cy="173.0" r="5"><title>Blank answers avoided, relay family: +3.1 [+2.1, +4.1]</title></circle>
+<text class="t1" x="477.2" y="177.0" font-size="11">+3.1</text>
+<text class="t2" x="28" y="203.0" font-size="12">Relay (tool result is the answer)</text>
+<line class="w" x1="412.8" x2="445.2" y1="199.0" y2="199.0"/>
+<circle class="m" cx="429.6" cy="199.0" r="5"><title>Relay (tool result is the answer): +0.8 [-0.6, +2.1]</title></circle>
+<text class="t1" x="453.2" y="203.0" font-size="11">+0.8</text>
+<text class="t1" x="16" y="229.0" font-size="12" font-weight="600">Public benchmarks</text>
+<text class="t2" x="28" y="255.0" font-size="12">BFCL non-live AST, pooled</text>
+<line class="w" x1="408.0" x2="456.0" y1="251.0" y2="251.0"/>
+<circle class="m" cx="432.0" cy="251.0" r="5"><title>BFCL non-live AST, pooled: +1.0 [-1.0, +3.0]</title></circle>
+<text class="t1" x="464.0" y="255.0" font-size="11">+1.0</text>
+<text class="t2" x="28" y="281.0" font-size="12">BFCL irrelevance</text>
+<line class="w" x1="399.6" x2="480.0" y1="277.0" y2="277.0"/>
+<circle class="m" cx="440.4" cy="277.0" r="5"><title>BFCL irrelevance: +1.7 [-1.7, +5.0]</title></circle>
+<text class="t1" x="488.0" y="281.0" font-size="11">+1.7</text>
+<text class="t2" x="28" y="307.0" font-size="12">BFCL multi_turn_base</text>
+<line class="w" x1="402.0" x2="546.0" y1="303.0" y2="303.0"/>
+<circle class="m" cx="474.0" cy="303.0" r="5"><title>BFCL multi_turn_base: +4.5 [-1.5, +10.5]</title></circle>
+<text class="t1" x="554.0" y="307.0" font-size="11">+4.5</text>
+<text class="t2" x="28" y="333.0" font-size="12">When2Call macro F1</text>
+<line class="w" x1="343.2" x2="434.4" y1="329.0" y2="329.0"/>
+<circle class="m" cx="390.0" cy="329.0" r="5"><title>When2Call macro F1: -2.5 [-6.4, +1.2]</title></circle>
+<text class="t1" x="442.4" y="333.0" font-size="11">-2.5</text>
+<text class="t2" x="28" y="359.0" font-size="12">When2Call hallucination avoided (T=1 x10)</text>
+<line class="w" x1="393.6" x2="446.4" y1="355.0" y2="355.0"/>
+<circle class="m" cx="420.0" cy="355.0" r="5"><title>When2Call hallucination avoided (T=1 x10): +0.0 [-2.2, +2.2]</title></circle>
+<text class="t1" x="454.4" y="359.0" font-size="11">+0.0</text>
+<text class="t2" x="510.0" y="402" font-size="11" text-anchor="middle">adapter - stock, percentage points</text>
+</svg>
