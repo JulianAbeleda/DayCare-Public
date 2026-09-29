@@ -36,6 +36,8 @@ export DAYCARE_TRAIN_TINYGRAD_PATH=$PWD/tinygrad-arkey
 ```
 
 No pip install is needed: `trainer_env` puts the tree first on `sys.path`. Python needs only `numpy` and `jinja2`.
+Use a checkout, not `pip install` of tinygrad-arkey: the installed package leaves out the repository's `extra/`
+tree, which its own model and attention modules import, so the loop fails with `No module named 'extra'`.
 Run 5 trained on one 32 GB NVIDIA GPU (tinygrad picks the device; `DEV` overrides it).
 
 ### Model
@@ -91,7 +93,11 @@ The argument rules, rejection texts and timeout are in the runner's [README](../
   three steps: `freeze` (the task list and a fixed split), `rloo_posttool sample --tasks` (the stock model's own
   first call on each task), then `states`. `freeze` checks the new tasks for overlap with earlier evaluation suites
   that are not published. It reads them from `DAYCARE_RUNS`, so it cannot rebuild tasks-003 exactly outside the
-  original setup. You can build your own task set with the same generators.
+  original setup. You can build your own task set with the same generators:
+  `python -m daycare.nursery.posttool_tasks freeze --root R --no-private-suites` skips those exclusions and the
+  historical `empty` states (their probe history is unpublished too), and fetches the Countdown tasks over the
+  network (`--countdown-per-size 0` to skip them). `freeze` builds in a temporary folder and renames it to `R`
+  only on success.
 - The records of runs 1-6 (used by the trigger replays in `tests/test_rl_triggers.py`, which skip without them).
 
 ## Reproduce run 5

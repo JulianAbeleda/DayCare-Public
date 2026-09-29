@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import os
 
-# DAYCARE_TRAIN_TINYGRAD_PATH selects the trainer tinygrad (tinygrad-arkey exp); see rloo_tinygrad.
+# The trainer tinygrad (tinygrad-arkey exp) is selected by trainer_env; see rloo_tinygrad.
 import argparse  # noqa: E402
 import hashlib  # noqa: E402
 import json  # noqa: E402
@@ -37,6 +37,7 @@ from daycare.model.chat_format import SegmentEncoder  # noqa: E402
 from . import rloo_tinygrad as one  # noqa: E402  (selects the trainer tinygrad first)
 from .rl_triggers import limits_arg  # noqa: E402
 from .rloo_tinygrad import CONFIG, MODEL  # noqa: E402
+from .trainer_env import trainer_revision, trainer_root  # noqa: E402
 
 CAP = 8  # sampled turns per episode (GameTerm allows 32 tool iterations; this bounds rollout cost)
 SHARED_GRAIN = 512  # the flash-attention prefill block: a shared prefix is cut to whole blocks
@@ -326,7 +327,7 @@ def sample(args):
                          adapter=str(args.run / 'adapter.xml') if args.run else 'zero (stock)',
                          limit=args.limit, load_s=load_s, source=str(args.tasks or args.states),
                          source_sha256=hashlib.sha256((args.tasks or args.states).read_bytes()).hexdigest(),
-                         tinygrad_revision=one._git_head(os.environ['DAYCARE_TRAIN_TINYGRAD_PATH']),
+                         tinygrad_revision=trainer_revision(),
                          envelope=str(args.envelope), envelope_sha256=hashlib.sha256(args.envelope.read_bytes()).hexdigest())
     write(args.root / 'sample.xml', record, root='sample')
     if args.keep_blanks:  # the final turn's tokens of every episode the user sees no answer from (for `force`)
@@ -391,7 +392,7 @@ def force(args):
     record = dict(schema='daycare.posttool_force.v1', blanks=str(args.blanks), seed=args.seed, limit=args.limit,
                   think_end=think_end, adapter=str(args.run / 'adapter.xml') if args.run else 'zero (stock)',
                   seconds=seconds, rows=rows, not_forceable=skipped,
-                  tinygrad_revision=one._git_head(os.environ['DAYCARE_TRAIN_TINYGRAD_PATH']))
+                  tinygrad_revision=trainer_revision())
     write(args.root / 'force.xml', record, root='force')
     print(f'{len(rows)} forced, {sum(r["reward"] for r in rows):.0f} correct, {len(skipped)} not forceable, '
           f'{seconds:.0f} s', flush=True)
@@ -473,7 +474,7 @@ def resume(args):
     record = dict(schema='daycare.posttool_resume.v1', blanks=str(args.blanks), seed=args.seed, cap_before=source['limit'],
                   limit=args.limit, cap=args.cap, adapter=str(args.run / 'adapter.xml') if args.run else 'zero (stock)',
                   seconds=seconds, load_s=load_s, rows=rows, stats={k: v for k, v in stats.items() if isinstance(v, (int, float))},
-                  tinygrad_revision=one._git_head(os.environ['DAYCARE_TRAIN_TINYGRAD_PATH']))
+                  tinygrad_revision=trainer_revision())
     write(args.root / 'resume.xml', record, root='resume')
     print(f'{len(rows)} resumed, {sum(r["first_stop"] == "eos" for r in rows)} finished, '
           f'{sum(r["reward"] for r in rows):.0f} correct, {seconds:.0f} s', flush=True)
@@ -613,8 +614,8 @@ def train(args):
     record = dict(schema='daycare.rloo_tinygrad.v1', episode_source='posttool', complete=False,
                   daycare_revision=source_revision(), runner_sha256=file_sha256(Path(__file__)),
                   model_sha256=file_sha256(args.model), envelope_sha256=file_sha256(args.envelope),
-                  states_sha256=file_sha256(args.states), tinygrad=os.environ['DAYCARE_TRAIN_TINYGRAD_PATH'],
-                  tinygrad_revision=one._git_head(os.environ['DAYCARE_TRAIN_TINYGRAD_PATH']),
+                  states_sha256=file_sha256(args.states), tinygrad=trainer_root(),
+                  tinygrad_revision=trainer_revision(),
                   model_profile=dict(architecture='nemotron_h', precision='bf16'), rank=cfg['rank'], alpha=cfg['alpha'],
                   last_k=1, target_map=one.target_map(loop.adapters), lr=cfg['lr'], seed=cfg['seed'],
                   examples=len(states), shared_prefix=shared, training_objective='rloo-tinygrad-posttool',

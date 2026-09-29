@@ -54,7 +54,7 @@ def test_length_push_triggers():
     assert not any(triggers.check(steady(advantage_length_sum=float('nan'))) for _ in range(30))
 
 
-@pytest.mark.skipif(not os.path.isdir(os.path.join(trainer_env.TRAIN_TINYGRAD_PATH, 'tinygrad')),
+@pytest.mark.skipif(not trainer_env.trainer_available(),
                     reason='trainer tinygrad not installed')
 def test_replayed_push_scores_the_run3_reward():
     group = [dict(state='repair:a', reward=1.0, reason='correct', final='<answer>3</answer>', final_call=False,

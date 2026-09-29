@@ -39,7 +39,7 @@ import time  # noqa: E402
 
 import numpy as np  # noqa: E402
 
-from .trainer_env import use_train_tinygrad  # noqa: E402
+from .trainer_env import trainer_revision, trainer_root, use_train_tinygrad  # noqa: E402
 
 use_train_tinygrad()
 try:
@@ -558,8 +558,8 @@ def train(args):
     setup_s = time.perf_counter() - clock
     record = dict(schema="daycare.rloo_tinygrad.v1", complete=False, daycare_revision=revision,
                   runner_sha256=file_sha256(Path(__file__)), model_sha256=file_sha256(args.model),
-                  envelope_sha256=file_sha256(args.envelope), tinygrad=os.environ["DAYCARE_TRAIN_TINYGRAD_PATH"],
-                  tinygrad_revision=_git_head(os.environ["DAYCARE_TRAIN_TINYGRAD_PATH"]),
+                  envelope_sha256=file_sha256(args.envelope), tinygrad=trainer_root(),
+                  tinygrad_revision=trainer_revision(),
                   model_profile=dict(architecture="nemotron_h", precision="bf16"), rank=cfg["rank"],
                   alpha=cfg["alpha"], last_k=1, target_map=target_map(loop.adapters), lr=cfg["lr"],
                   seed=cfg["seed"], examples=len(tasks), common_prefix=_common(prompts),
@@ -663,11 +663,6 @@ def run(loop, tasks, prompts, cfg, record, root: Path, score, export: bool = Tru
         record.update(export_adapter(root, loop, record))
     write(root / "run.xml", record, root="run")
     return record
-
-
-def _git_head(path: str) -> str:
-    import subprocess
-    return subprocess.check_output(["git", "-C", path, "rev-parse", "HEAD"]).decode().strip()
 
 
 def main():

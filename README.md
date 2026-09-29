@@ -74,8 +74,8 @@ model weights and run outputs.
 ```bash
 git clone https://github.com/JulianAbeleda/DayCare-Public && cd DayCare-Public
 python -m venv .venv && . .venv/bin/activate
-pip install -e ".[train,test]"   # train = the pinned tinygrad-arkey fork; drop it for harness/tests only
-# or without cloning: pip install "daycare[train] @ git+https://github.com/JulianAbeleda/DayCare-Public"
+pip install -e ".[test]"
+# the RL loop needs a tinygrad-arkey checkout at the pinned commit (not a pip install): docs/rl-training.md
 
 # tests: no GPU, no model
 python -m pytest tests

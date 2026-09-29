@@ -23,26 +23,58 @@ TRAIN_TINYGRAD_PATH = os.environ.get(
 )
 
 
-def use_train_tinygrad():
-    """Put the train-only tinygrad on sys.path and return the module.
+def trainer_root() -> str | None:
+    """The directory holding the trainer `tinygrad/` package, or None if there is none.
 
-    Raises a clear error if the vendor dir is missing (run setup_trainer.sh).
+    DAYCARE_TRAIN_TINYGRAD_PATH (a tinygrad-arkey checkout, needed by the RL loop), else the
+    vendor dir from setup_trainer.sh. A pip-installed tinygrad is deliberately not used: the
+    tinygrad-arkey wheel omits the `extra/` tree its own modules import (docs/rl-training.md).
     """
-    if not os.path.isdir(os.path.join(TRAIN_TINYGRAD_PATH, "tinygrad")):
-        # Fall back to an installed tinygrad (`pip install "daycare[train]"` pins the tinygrad-arkey fork),
-        # unless a path was set explicitly.
-        if "DAYCARE_TRAIN_TINYGRAD_PATH" not in os.environ:
-            try:
-                import tinygrad  # noqa: F401
-                return tinygrad
-            except ImportError:
-                pass
+    if os.path.isdir(os.path.join(TRAIN_TINYGRAD_PATH, "tinygrad")):
+        return TRAIN_TINYGRAD_PATH
+    return None
+
+
+def trainer_available() -> bool:
+    return trainer_root() is not None
+
+
+def trainer_revision() -> str:
+    """The trainer tinygrad's revision: git HEAD of a checkout, else the vendored version."""
+    root = trainer_root()
+    if root is None:
+        raise RuntimeError("no trainer tinygrad (see use_train_tinygrad)")
+    if os.path.exists(os.path.join(root, ".git")):
+        import subprocess
+        return subprocess.check_output(["git", "-C", root, "rev-parse", "HEAD"]).decode().strip()
+    import glob
+    found = sorted(glob.glob(os.path.join(root, "tinygrad-*.dist-info")))
+    return os.path.basename(found[-1])[: -len(".dist-info")].replace("-", "==", 1) if found else "unknown"
+
+
+def trainer_subprocess_env(env: dict | None = None) -> dict:
+    """An environment for a child process that selects the same trainer tinygrad as this one."""
+    env = dict(os.environ if env is None else env)
+    root = trainer_root()
+    if root is not None:
+        env["DAYCARE_TRAIN_TINYGRAD_PATH"] = root
+    return env
+
+
+def use_train_tinygrad():
+    """Put the trainer tinygrad on sys.path and return the module.
+
+    Raises a clear error if there is none.
+    """
+    root = trainer_root()
+    if root is None:
         raise RuntimeError(
-            f"train tinygrad not found at {TRAIN_TINYGRAD_PATH}; "
-            "run daycare/nursery/setup_trainer.sh, pip install \"daycare[train]\", or set DAYCARE_TRAIN_TINYGRAD_PATH"
+            f"train tinygrad not found at {TRAIN_TINYGRAD_PATH}; set DAYCARE_TRAIN_TINYGRAD_PATH to a "
+            "tinygrad-arkey checkout at the pinned commit, or run daycare/nursery/setup_trainer.sh "
+            "(docs/rl-training.md)"
         )
-    if TRAIN_TINYGRAD_PATH not in sys.path:
-        sys.path.insert(0, TRAIN_TINYGRAD_PATH)
+    if root not in sys.path:
+        sys.path.insert(0, root)
     import tinygrad  # noqa: F401
 
     return tinygrad

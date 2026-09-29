@@ -1,6 +1,5 @@
 import copy
 import json
-import os
 
 import numpy as np
 import pytest
@@ -22,7 +21,7 @@ def example():
     return tensors, record
 
 
-@pytest.mark.skipif(not os.path.isdir(os.path.join(trainer_env.TRAIN_TINYGRAD_PATH, 'tinygrad')),
+@pytest.mark.skipif(not trainer_env.trainer_available(),
                     reason='trainer tinygrad not installed')
 def test_lora_gguf_preserves_matrices_shapes_and_alpha(tmp_path):
     from daycare.artifact.lora_gguf import export

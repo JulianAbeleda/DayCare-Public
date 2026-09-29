@@ -15,7 +15,9 @@ import sys
 import numpy as np
 import pytest
 
-EXP = Path(os.environ.get("DAYCARE_TRAIN_TINYGRAD_PATH") or "$DAYCARE_TRAIN_TINYGRAD_PATH")  # tinygrad-arkey exp
+from daycare.nursery import trainer_env  # noqa: E402
+
+EXP = Path(trainer_env.trainer_root() or "$DAYCARE_TRAIN_TINYGRAD_PATH")  # tinygrad-arkey exp (checkout or installed)
 
 
 class TailPolicy:
@@ -205,7 +207,7 @@ def check_skip(loop, cfg, root: Path) -> dict:
 
 @pytest.mark.skipif(not (EXP / "tinygrad/llm/nemotron_h_sampler.py").exists(), reason="tinygrad-arkey exp tree missing")
 def test_two_one_stack_updates_step_in_place_and_hold_parity(tmp_path):
-    env = dict(os.environ, DAYCARE_TRAIN_TINYGRAD_PATH=str(EXP), PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+    env = dict(trainer_env.trainer_subprocess_env(), PYTHONPATH=str(Path(__file__).resolve().parents[1]))
     env.setdefault("DEV", "CPU")
     done = subprocess.run([sys.executable, __file__, str(tmp_path)], env=env, capture_output=True, text=True,
                           timeout=1800)

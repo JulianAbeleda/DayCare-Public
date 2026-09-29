@@ -16,7 +16,9 @@ import tempfile
 
 import pytest
 
-EXP = Path(os.environ.get("DAYCARE_TRAIN_TINYGRAD_PATH") or "$DAYCARE_TRAIN_TINYGRAD_PATH")  # tinygrad-arkey exp
+from daycare.nursery import trainer_env  # noqa: E402
+
+EXP = Path(trainer_env.trainer_root() or "$DAYCARE_TRAIN_TINYGRAD_PATH")  # tinygrad-arkey exp (checkout or installed)
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 
@@ -213,7 +215,7 @@ def run_progress_check() -> dict:
 @pytest.mark.skipif(not Path(os.environ.get("DAYCARE_CALCULATE_RUNNER") or "$DAYCARE_CALCULATE_RUNNER").exists(),
                     reason="GameTerm calculate runner not built")
 def test_progress_streams_partial_states_and_leaves_the_record_unchanged():
-    env = dict(os.environ, DAYCARE_TRAIN_TINYGRAD_PATH=str(EXP), PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+    env = dict(trainer_env.trainer_subprocess_env(), PYTHONPATH=str(Path(__file__).resolve().parents[1]))
     env.setdefault("DEV", "CPU")
     done = subprocess.run([sys.executable, __file__, "progress"], env=env, capture_output=True, text=True, timeout=1800)
     assert done.returncode == 0, done.stderr[-4000:]
@@ -231,7 +233,7 @@ def test_progress_streams_partial_states_and_leaves_the_record_unchanged():
 @pytest.mark.skipif(not Path(os.environ.get("DAYCARE_CALCULATE_RUNNER") or "$DAYCARE_CALCULATE_RUNNER").exists(),
                     reason="GameTerm calculate runner not built")
 def test_multi_turn_episodes_train_only_sampled_tokens():
-    env = dict(os.environ, DAYCARE_TRAIN_TINYGRAD_PATH=str(EXP), PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+    env = dict(trainer_env.trainer_subprocess_env(), PYTHONPATH=str(Path(__file__).resolve().parents[1]))
     env.setdefault("DEV", "CPU")
     done = subprocess.run([sys.executable, __file__], env=env, capture_output=True, text=True, timeout=1800)
     assert done.returncode == 0, done.stderr[-4000:]

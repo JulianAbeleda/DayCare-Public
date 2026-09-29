@@ -12,8 +12,8 @@ requires-python = ">=3.10"
 dependencies = ["numpy", "jinja2"]
 
 [project.optional-dependencies]
-# The trainer: the tinygrad-arkey fork at the commit the adopted run-5 adapter was trained with.
-train = ["tinygrad-arkey @ git+https://github.com/JulianAbeleda/tinygrad-arkey@bbf307f8347c166ec93b40d81c1b0bd3ce728563"]
+# No `train` extra: the trainer is a tinygrad-arkey *checkout* selected with DAYCARE_TRAIN_TINYGRAD_PATH
+# (docs/rl-training.md). Its pip install omits the `extra/` tree its own modules import.
 test = ["pytest"]
 
 [project.urls]
