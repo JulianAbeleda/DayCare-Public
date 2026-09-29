@@ -1,4 +1,13 @@
+import os
+
 import numpy as np
+import pytest
+
+from daycare.nursery import trainer_env
+
+if not os.path.isdir(os.path.join(trainer_env.TRAIN_TINYGRAD_PATH, "tinygrad")):
+    pytest.skip("trainer tinygrad not installed (setup_trainer.sh or DAYCARE_TRAIN_TINYGRAD_PATH)",
+                allow_module_level=True)
 
 
 def tinygrad():
