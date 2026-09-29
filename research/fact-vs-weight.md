@@ -1,7 +1,7 @@
 # Fact vs Weight: what goes in the file, what goes in the brain
 
-The operational form of the governing rule in [Scope: What A model Should
-Learn](learning-scope.md). "Declarative vs procedural" ([model](subject.md) sec 8) is
+The operational form of the governing rule in Scope: What A model Should
+Learn. "Declarative vs procedural" (model sec 8) is
 the right idea but too fuzzy to decide with at 2am. This is the version you can
 actually apply.
 

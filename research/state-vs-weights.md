@@ -5,7 +5,7 @@ way. It turns out the field ran this race first, at scale, and got the same answ
 This note records the prior art so we stop re-deriving it -- and so we cite it
 rather than claim we invented it.
 
-Governing rule: [Scope: What A model Should Learn](learning-scope.md). The measured
+Governing rule: Scope: What A model Should Learn. The measured
 DayCare failure: [Catastrophic Forgetting](catastrophic-forgetting.md).
 
 ## The finding: for facts, the file beats the weights
@@ -52,7 +52,7 @@ facts, corrections, identity, preferences  ->  the file / context   (RAG, memory
 style, format, skill, behaviour            ->  fine-tuning
 ```
 
-This is the **same declarative/procedural split** [model](subject.md) sec 8 already
+This is the **same declarative/procedural split** model sec 8 already
 wrote -- *"declarative -> stays in the state file... never risked to SGD; procedural
 -> migrates into weights."* The literature agrees with the rule we wrote and then
 broke. Sec 8 was right; we carved the exception.

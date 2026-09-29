@@ -154,6 +154,6 @@ SFT assistant for readable decisions
 The JEPA model proposes or ranks latent states. It does not promote candidates
 without the normal correctness, route, speed, and roofline evidence.
 
-See also [model Lineage (artificial-life prior art)](subject-lineage.md)
+See also model Lineage (artificial-life prior art)
 for a related architecture where a latent state model sits inside a persistent
 agent loop with drives, memory, user feedback, and environment transitions.

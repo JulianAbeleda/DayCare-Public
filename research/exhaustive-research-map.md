@@ -4,7 +4,7 @@ This note is the coverage checklist for DayCare. The goal is not to memorize eve
 training method answers which kind of problem, what evidence supports it, and what failure mode to watch before using
 it for BoltBeam-style models.
 
-Read this through the two-track split in [Two-Track Strategy](two-track-strategy.md): pure LLM work builds
+Read this through the two-track split in Two-Track Strategy: pure LLM work builds
 understanding and baselines, while model work is the target architecture for persistent trainable agents.
 
 ## 1. Pretraining

@@ -2,7 +2,7 @@
 
 Teaching a model something new can destroy what it already knew. This is not a
 side-topic for DayCare: it is the reason the whole two-timescale design exists
-(waking state vs sleeping consolidation, [model](subject.md) sec 8), and it is what
+(waking state vs sleeping consolidation, model sec 8), and it is what
 killed our first real training result.
 
 > Opinion, separated from fact per repo principles: the measured DayCare result and
@@ -20,7 +20,7 @@ online fast weights        4/4                  0/5          FAIL
 ```
 
 She answers "Ada" to *"what is 2+2?"*. Details and artifacts:
-[Scope: Learning the Name](name-learning-scope.md).
+Scope: Learning the Name.
 
 Three things this taught us that the papers below then explained:
 
@@ -102,12 +102,12 @@ trying to install is exactly the thing that ate her.
 
 ## Why this connects to the architecture
 
-The two timescales ([model](subject.md) sec 8) are a response to this: fast weights
+The two timescales (model sec 8) are a response to this: fast weights
 hold the recent past and fade, and only sleep -- *eval-gated* -- writes to the slow
 weights. That gate is the whole point, and we skipped it. The design was right; the
 discipline was missing.
 
-The [fast-weight lobe](fast-weight-lobe-scope.md) makes this sharper, not safer:
+The fast-weight lobe makes this sharper, not safer:
 per-turn updates are more exposure, not less. Its bounds (decay, clip, min_signal,
 top-K) are the mitigation, and they must be measured against an off-task probe --
 not trusted because they are written down.

@@ -2,7 +2,7 @@
 
 This note maps the major training families and when to use each.
 
-Use it with [Two-Track Strategy](two-track-strategy.md): the pure LLM route is
+Use it with Two-Track Strategy: the pure LLM route is
 for understanding and baselines, while the model route is the goal.
 
 ## Summary Table
@@ -26,7 +26,7 @@ memorizes leakage. See [Data Curation And Evaluation](data-and-evaluation.md)
 and the [Exhaustive Research Map](exhaustive-research-map.md).
 
 Persistent-agent work is a separate system layer. See
-[model Lineage (artificial-life prior art)](subject-lineage.md) for the
+model Lineage (artificial-life prior art) for the
 architecture pattern: persistent state, drives, online learning, grounded
 actions, and verifier-backed feedback.
 
