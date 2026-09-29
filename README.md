@@ -51,11 +51,12 @@ real reading shift. Run 6 did not reproduce it on a second seed because its entr
 
 - the base training pipeline (SFT + LoRA + before/after gate), the verdict vocabulary and campaign harness, the
   single-file artifact format, and the substrates (`daycare/`);
+- the RL loop behind the post-tool work (`rloo_tinygrad`, `rloo_posttool`, the stop triggers, the GameTerm
+  episode rules and graders) and its tests: [RL training](docs/rl-training.md);
 - the research records, including the post-tool RL series (`research/`) and the run playbook (`docs/`).
 
-**Not yet published:** the RL loop behind the post-tool work (`rloo_tinygrad`, `rloo_posttool`, stop triggers,
-gate scripts) and its tests. The records reference those modules by name. No model weights, datasets or run
-outputs are published.
+**Not published:** the one-off gate and analysis scripts, the GameTerm calculator runner (not public yet; its
+interface is documented), the captured GameTerm envelope, the frozen task states, model weights and run outputs.
 
 ## Quickstart
 
@@ -85,6 +86,27 @@ python -m daycare.harness --workload "repo idiom" --repeats 3 --out ledger.xml
 ```
 
 Training and merging need a GPU and a local model; none of the commands above needs a network after setup.
+
+## Reproduce run 5
+
+The adopted adapter's recipe, on [tinygrad-arkey](https://github.com/JulianAbeleda/tinygrad-arkey) `exp` at
+`bbf307f8347c166ec93b40d81c1b0bd3ce728563` and
+[Nemotron 3 Nano 4B BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-4B-BF16) converted to GGUF:
+
+```bash
+export DAYCARE_TRAIN_TINYGRAD_PATH=/path/to/tinygrad-arkey DAYCARE_BASE_GGUF=/path/to/nemotron-3-nano-4b-bf16.gguf
+export DAYCARE_CALCULATE_RUNNER=/path/to/gameterm-calculate-runner
+python -m daycare.nursery.rloo_posttool train --root out/r5 --states $S --envelope $E --updates 102 \
+  --categories repair relay blocked --mix repair=0.75,relay=0.15,blocked=0.1 --mask none --reward graded \
+  --wrong -1 --blank -1.5 --abstain relay=-0.5,repair=0,miss=0,empty=0,blocked=0 --length-weight 1.0 \
+  --repetition n=40,penalty=-0.05 --kl-aggregation matched --kl-beta 0.03 --lanes 32 --prompts-per-update 4 \
+  --compact 8,16 --keep-every 10 --train-seed 20260930 --protocol rloo-posttool-calculator-r5.md
+```
+
+Not everything is public yet. The GameTerm calculator runner is not public; [RL training](docs/rl-training.md)
+documents its JSON-lines interface so you can substitute your own. The envelope (`$E`) and the frozen task states
+(`$S`) are not published either. That page covers the one-update bit-exact check to run first, how the states are
+built, and the tests.
 
 ## The pipeline
 
