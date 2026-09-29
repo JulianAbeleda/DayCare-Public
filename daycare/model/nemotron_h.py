@@ -14,15 +14,47 @@ state tensor.  This avoids a Python operation per token and avoids the unstable
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 import pathlib
 
 from ..nursery.trainer_env import use_train_tinygrad
 
 use_train_tinygrad()
 
-from tinygrad import Tensor, nn  # noqa: E402
+from tinygrad import Tensor, dtypes, nn  # noqa: E402
+from tinygrad.dtype import least_upper_dtype  # noqa: E402
 from tinygrad.llm.gguf import gguf_load  # noqa: E402
 from tinygrad.nn.state import load_state_dict  # noqa: E402
+
+
+def _arange_takes_device() -> bool:
+    import inspect
+    parameters = inspect.signature(Tensor.arange).parameters
+    return "device" in parameters or any(p.kind is p.VAR_KEYWORD for p in parameters.values())
+
+
+_ARANGE_TAKES_DEVICE = _arange_takes_device()
+
+
+def _arange(*args, device) -> Tensor:
+    """`Tensor.arange` on `device`: tinygrad 0.13 takes `device=`, tinygrad-arkey's arange does not."""
+    if _ARANGE_TAKES_DEVICE:
+        return Tensor.arange(*args, device=device)
+    return Tensor.arange(*args).to(device)
+
+
+def _attention(q: Tensor, k: Tensor, v: Tensor, mask: Tensor) -> Tensor:
+    """Masked GQA attention as plain differentiable ops (tinygrad 0.13's SDPA, written out).
+
+    tinygrad-arkey's `scaled_dot_product_attention` returns an `Ops.ATTENTION` node that has
+    no gradient, so the training forward spells the same math out; on tinygrad 0.13 this is
+    the graph its SDPA builds.
+    """
+    group = int(q.shape[-3] // k.shape[-3])
+    k, v = k.repeat_interleave(group, dim=-3), v.repeat_interleave(group, dim=-3)
+    scores = q.matmul(k.transpose(-2, -1), dtype=least_upper_dtype(q.dtype, k.dtype, dtypes.float32))
+    scores = scores / math.sqrt(q.shape[-1]) + mask
+    return scores.cast(q.dtype).softmax(-1) @ v
 
 
 @dataclass(frozen=True)
@@ -134,7 +166,7 @@ class NemotronHMamba2:
         # Inputs use (batch, time, heads, feature/state); state is (batch, heads, feature, state).
         _, length, heads, _ = x.shape
         cumulative = log_a.cumsum(axis=1).transpose(1, 2)  # (batch, heads, time)
-        positions = Tensor.arange(length, device=x.device)
+        positions = _arange(length, device=x.device)
         causal = (positions.reshape(length, 1) >= positions.reshape(1, length)).reshape(1, 1, length, length)
         # Mask before exp: strongly negative A can make the unused upper
         # triangle strongly positive.  ``exp(value) * 0`` would become NaN.
@@ -293,13 +325,11 @@ class NemotronHAttention:
         for start in range(0, length, query_chunk):
             stop = min(start + query_chunk, length)
             q_chunk, k_prefix, v_prefix = q[:, :, start:stop], k[:, :, :stop], v[:, :, :stop]
-            q_pos = Tensor.arange(start, stop, device=hidden.device).reshape(-1, 1)
-            k_pos = Tensor.arange(stop, device=hidden.device).reshape(1, -1)
+            q_pos = _arange(start, stop, device=hidden.device).reshape(-1, 1)
+            k_pos = _arange(stop, device=hidden.device).reshape(1, -1)
             allowed = (q_pos >= k_pos).reshape(1, 1, stop - start, stop)
             mask = allowed.where(0.0, float("-inf")).cast(hidden.dtype)
-            attended = q_chunk.scaled_dot_product_attention(
-                k_prefix, v_prefix, attn_mask=mask, enable_gqa=True
-            )
+            attended = _attention(q_chunk, k_prefix, v_prefix, mask)
             chunks.append(attended if retain_graph else attended.realize())
         attended = chunks[0]
         for chunk in chunks[1:]:
@@ -320,8 +350,8 @@ class NemotronHAttention:
             stop = min(start + query_chunk, length)
             key_stop = prefix + stop
             q_chunk = q[:, :, start:stop]
-            q_pos = Tensor.arange(prefix + start, prefix + stop, device=hidden.device).reshape(-1, 1)
-            k_pos = Tensor.arange(key_stop, device=hidden.device).reshape(1, -1)
+            q_pos = _arange(prefix + start, prefix + stop, device=hidden.device).reshape(-1, 1)
+            k_pos = _arange(key_stop, device=hidden.device).reshape(1, -1)
             allowed = (q_pos >= k_pos).reshape(1, 1, stop - start, key_stop)
             mask = allowed.where(0.0, float("-inf")).cast(hidden.dtype)
             chunks.append(q_chunk.scaled_dot_product_attention(
