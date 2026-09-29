@@ -1,6 +1,6 @@
 """DayCare's train-only tinygrad.
 
-The split (see research/spryt.md, research/name-learning-scope.md):
+The split:
 
     upstream tinygrad   everything -- too broad to depend on wholesale
     DayCare (this)      TRAIN only: a pinned upstream copy for autograd + optim
@@ -29,9 +29,17 @@ def use_train_tinygrad():
     Raises a clear error if the vendor dir is missing (run setup_trainer.sh).
     """
     if not os.path.isdir(os.path.join(TRAIN_TINYGRAD_PATH, "tinygrad")):
+        # Fall back to an installed tinygrad (`pip install "daycare[train]"` pins the tinygrad-arkey fork),
+        # unless a path was set explicitly.
+        if "DAYCARE_TRAIN_TINYGRAD_PATH" not in os.environ:
+            try:
+                import tinygrad  # noqa: F401
+                return tinygrad
+            except ImportError:
+                pass
         raise RuntimeError(
             f"train tinygrad not found at {TRAIN_TINYGRAD_PATH}; "
-            "run daycare/nursery/setup_trainer.sh (or set DAYCARE_TRAIN_TINYGRAD_PATH)"
+            "run daycare/nursery/setup_trainer.sh, pip install \"daycare[train]\", or set DAYCARE_TRAIN_TINYGRAD_PATH"
         )
     if TRAIN_TINYGRAD_PATH not in sys.path:
         sys.path.insert(0, TRAIN_TINYGRAD_PATH)

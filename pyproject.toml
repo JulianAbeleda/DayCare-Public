@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daycare"
+version = "0.1.0"
+description = "A dependency-light training stack for small local language models: tinygrad LoRA training, RLOO on tool turns, and a measurement harness."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["numpy", "jinja2"]
+
+[project.optional-dependencies]
+# The trainer: the tinygrad-arkey fork at the commit the adopted run-5 adapter was trained with.
+train = ["tinygrad-arkey @ git+https://github.com/JulianAbeleda/tinygrad-arkey@bbf307f8347c166ec93b40d81c1b0bd3ce728563"]
+test = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/JulianAbeleda/DayCare-Public"
+
+[tool.setuptools.packages.find]
+include = ["daycare*"]
+
+[tool.setuptools.package-data]
+"daycare.nursery" = ["*.sh"]
