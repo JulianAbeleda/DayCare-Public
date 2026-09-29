@@ -17,7 +17,7 @@ calculate exchanges in the wire envelope):
 before any model call; `rloo_posttool sample --tasks` (GPU) samples the stock model's own first turn on every
 miss/relay task; `states` turns each own `calculate` call into a state with its real result and freezes them.
 
-    python -m daycare.nursery.posttool_tasks freeze --root R
+    python -m daycare.nursery.posttool_tasks freeze --root R [--no-private-suites]
     python -m daycare.nursery.posttool_tasks states --root R --harvest H/sample.xml
 """
 from __future__ import annotations
@@ -32,11 +32,14 @@ import os
 from pathlib import Path
 import random
 import re
+import shutil
+import tempfile
 
 from daycare.artifact.record_xml import read, write
 
 # Inputs from earlier DayCare runs (retention suite, selection pool, used Countdown tasks, probe history) are not
-# published; DAYCARE_RUNS names the directory that holds them. `freeze` refuses to run without the two it checks.
+# published; DAYCARE_RUNS names the directory that holds them. `freeze` refuses to run without the two it checks
+# unless `--no-private-suites` is given (no retention/selection exclusion, no historical `empty` states).
 RUNS = Path(os.environ.get('DAYCARE_RUNS') or '$DAYCARE_RUNS')
 RETENTION_SUITE = RUNS / 'large-model-comparison-001/suite.json'
 PREP = RUNS / 'countdown-recipe-prep-003'
@@ -347,13 +350,14 @@ def _words(text: str) -> set:
     return set(re.findall(r'[a-z]+', text.lower()))
 
 
-def disjointness(tasks: list[dict], exclude: list[Path]) -> dict:
+def disjointness(tasks: list[dict], exclude: list[Path], private: bool = True) -> dict:
     """Exact overlaps (by request text, answer suffix removed) with every excluded task list, the retention suite
     and G3's selection pool: any one fails the build. Near duplicates (word-set Jaccard >= 0.6) with the selection
     items are reported, not refused: a wording can share a template word ("file") without being the item."""
     text = lambda r: r.removesuffix(ANSWER).strip()  # noqa: E731
-    retention = json.loads(RETENTION_SUITE.read_text())
-    selection = [r for r in retention if r.get('family') == 'selection'] + json.loads(SELECTION_POOL.read_text())
+    retention = json.loads(RETENTION_SUITE.read_text()) if private else []
+    selection = ([r for r in retention if r.get('family') == 'selection'] + json.loads(SELECTION_POOL.read_text())
+                 if private else [])
     sources = {'retention': {text(r['request']) for r in retention},
                'selection_pool': {text(r['request']) for r in selection}}
     for path in exclude:
@@ -371,12 +375,35 @@ def disjointness(tasks: list[dict], exclude: list[Path]) -> dict:
 
 
 def freeze(args):
-    missing = [str(p) for p in (RETENTION_SUITE, SELECTION_POOL) if not p.exists()]
-    if missing:
-        raise SystemExit(f'freeze needs {missing}: set DAYCARE_RUNS to the directory that holds them '
-                         '(docs/rl-training.md)')
-    root = args.root
-    root.mkdir(parents=True, exist_ok=False)
+    root, private = args.root, args.private_suites
+    if root.exists():
+        raise SystemExit(f'{root} already exists: freeze writes a new root')
+    if private:
+        missing = [str(p) for p in (RETENTION_SUITE, SELECTION_POOL) if not p.exists()]
+        if missing:
+            raise SystemExit(f'freeze needs {missing} (unpublished earlier-run suites): set DAYCARE_RUNS to the '
+                             'directory that holds them, or pass --no-private-suites to freeze without those '
+                             'exclusions (docs/rl-training.md)')
+    elif args.empty:
+        print('--no-private-suites: leaving out the historical `empty` states (their probe history is unpublished)',
+              flush=True)
+        args.empty = False
+    if args.empty:
+        missing = [str(p) for p in (PREP / 'rl-tasks.json', PREP / 'probe-tasks.json', *HISTORY) if not p.exists()]
+        if missing:
+            raise SystemExit(f'the `empty` category needs {missing}: set DAYCARE_RUNS, or pass --no-empty')
+    # Build in a sibling temp dir and rename at the end, so a failure never leaves a half-made root.
+    root.parent.mkdir(parents=True, exist_ok=True)
+    work = Path(tempfile.mkdtemp(prefix=f'.{root.name}.', dir=root.parent))
+    try:
+        _freeze_into(work, args, private)
+        work.rename(root)
+    except BaseException:
+        shutil.rmtree(work, ignore_errors=True)
+        raise
+
+
+def _freeze_into(root: Path, args, private: bool):
     tasks = word_problems(args.per_template, args.seed)
     tasks += word_problems(args.long_per_template, args.seed + 1, LONG_TEMPLATES) if args.long_per_template else []
     tasks += countdown_tasks(args.countdown_per_size) if args.countdown_per_size else []
@@ -384,7 +411,7 @@ def freeze(args):
     tasks += blocked_requests(args.blocked_per_kind, random.Random(args.seed + 2)) if args.blocked_per_kind else []
     for task in tasks:
         task['id'] = args.id_prefix + task['id']
-    report = disjointness(tasks, args.exclude)
+    report = disjointness(tasks, args.exclude, private)
     if any(report['overlap'].values()):
         raise ValueError(f"tasks overlap: { {k: v for k, v in report['overlap'].items() if v} }")
     if len({t['id'] for t in tasks}) != len(tasks):
@@ -397,10 +424,11 @@ def freeze(args):
     for task in tasks:
         counts.setdefault(task['category'], {}).setdefault(task['split'], 0)
         counts[task['category']][task['split']] += 1
+    suites = (dict(retention_suite=str(RETENTION_SUITE), retention_suite_sha256=sha256(RETENTION_SUITE),
+                   retention_overlap=0, selection_pool=str(SELECTION_POOL),
+                   selection_pool_sha256=sha256(SELECTION_POOL)) if private else {})
     manifest = dict(schema='daycare.posttool_tasks.v1', seed=args.seed, heldout_share=HELDOUT,
-                    tasks_sha256=sha256(root / 'tasks.xml'), counts=counts, retention_suite=str(RETENTION_SUITE),
-                    retention_suite_sha256=sha256(RETENTION_SUITE), retention_overlap=0,
-                    selection_pool=str(SELECTION_POOL), selection_pool_sha256=sha256(SELECTION_POOL),
+                    tasks_sha256=sha256(root / 'tasks.xml'), counts=counts, private_suites=private, **suites,
                     excluded={str(p): sha256(p) for p in args.exclude}, disjointness=report,
                     countdown_offset=COUNTDOWN_OFFSET, countdown_excluded=[str(p) for p in USED_COUNTDOWN if p.exists()],
                     history=[str(p) for p in HISTORY] if args.empty else [],
@@ -486,6 +514,9 @@ def main():
     parser.add_argument('--long-per-template', type=int, default=0, help='long-number relay tasks per template')
     parser.add_argument('--blocked-per-kind', type=int, default=0, help='`blocked` requests per kind')
     parser.add_argument('--exclude', type=Path, nargs='*', default=[], help='earlier tasks.xml files: no shared request')
+    parser.add_argument('--no-private-suites', dest='private_suites', action='store_false',
+                        help='freeze without the unpublished DAYCARE_RUNS suites: no retention/selection exclusion '
+                             'and no historical `empty` states')
     parser.add_argument('--id-prefix', default='', help='prepended to every task id (e.g. t3-)')
     args = parser.parse_args()
     {'freeze': freeze, 'states': build_states}[args.action](args)
