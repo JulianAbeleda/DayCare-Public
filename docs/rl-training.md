@@ -52,27 +52,32 @@ Run 5's GGUF had sha256 `2126a5e8056f4178200f3c30dcac11ac0ebae200fdb8d2b8ff86e2f
 `model.safetensors` had sha256 `55d4e2519456c4a9bddf596b0748d630e3b2ce6ff6f4c2b7ed3e07e2b00dad42`. Each run records
 the model digest, so a different conversion shows up in the run record. No weights are published here.
 
-### GameTerm calculator runner (not yet public)
+### GameTerm calculator runner
 
 Episodes run `calculate` calls through GameTerm's own calculator (argument normalisation, then evaluation with
-[fend](https://github.com/printfn/fend)). The runner binary (`gameterm-calculate-runner`) is built from a GameTerm
-tree that is **not public**. A substitute must implement this interface:
+[fend](https://github.com/printfn/fend)). Its headless runner is in this repo: [`tools/calculate-runner`](../tools/calculate-runner/)
+(Rust 1.88, fend-core pinned at 1.5.8, `Cargo.lock` committed):
+
+```bash
+cd tools/calculate-runner && cargo build --release --locked
+export DAYCARE_CALCULATE_RUNNER=$PWD/target/release/gameterm-calculate-runner   # or pass --runner
+```
+
+Its replies are byte-identical to the runner run 5 used: 2,204 unique argument strings from run 5's records and 71
+edge cases (malformed and wrong-field arguments, bounds, rounding, percentages, division by zero, huge numbers,
+timeouts), and all 1,709 recorded `calculate` results re-render byte for byte. The interface:
 
 - an executable that takes no arguments and stays alive for the whole run;
 - **stdin:** one line per call, holding the `calculate` tool's arguments as compact JSON, e.g.
   `{"expression":"12 / 5"}` or `{"expression":"2/3","decimals":2}`;
 - **stdout:** one JSON line per call:
   - `{"ok":true,"outcome":"12 / 5 = 2.4"}`: an answer, shown to the model as stdout;
-  - `{"ok":false,"error":"arguments: MalformedArguments"}` (also `MissingField`, `OutOfRange`): a schema error.
-    DayCare turns it into a `rejected` result with GameTerm's fixed text (`posttool.REJECTIONS`);
-  - `{"ok":false,"error":"could not calculate ..."}`: a calculator refusal, shown to the model as stdout.
+  - `{"error":"arguments: MalformedArguments","ok":false}` (also `MissingField`, `OutOfRange`): a schema error.
+    DayCare turns it into a `rejected` result with GameTerm's fixed one-line text (`posttool.REJECTIONS`);
+  - `{"error":"could not calculate ...","ok":false}`: a calculator refusal (including the 1 s evaluation timeout),
+    shown to the model as stdout.
 
-```bash
-export DAYCARE_CALCULATE_RUNNER=/path/to/gameterm-calculate-runner   # or pass --runner
-```
-
-Each run records the runner's sha256. With a different calculator the environment is different, so its results are
-comparable to run 5's but not identical.
+The argument rules, rejection texts and timeout are in the runner's [README](../tools/calculate-runner/README.md).
 
 ### Inputs that are not published
 
@@ -123,4 +128,12 @@ DAYCARE_TRAIN_TINYGRAD_PATH=/path/to/tinygrad-arkey python -m pytest tests   # +
 ```
 
 Tests that need the calculator runner (`DAYCARE_CALCULATE_RUNNER`) or the unpublished run records (`DAYCARE_RUNS`)
-skip when those are not set.
+skip when those are not set. There is no CI; with the runner built, run them locally:
+
+```bash
+(cd tools/calculate-runner && cargo build --release --locked && cargo test --release --locked)
+DAYCARE_CALCULATE_RUNNER=$PWD/tools/calculate-runner/target/release/gameterm-calculate-runner python -m pytest tests
+```
+
+That un-skips `tests/test_posttool.py`'s calculator test; the two episode tests in `tests/test_rloo_posttool.py`
+also need `DAYCARE_TRAIN_TINYGRAD_PATH` (tinygrad-arkey `exp`).

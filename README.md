@@ -53,10 +53,11 @@ real reading shift. Run 6 did not reproduce it on a second seed because its entr
   single-file artifact format, and the substrates (`daycare/`);
 - the RL loop behind the post-tool work (`rloo_tinygrad`, `rloo_posttool`, the stop triggers, the GameTerm
   episode rules and graders) and its tests: [RL training](docs/rl-training.md);
-- the research records, including the post-tool RL series (`research/`) and the run playbook (`docs/`).
+- the research records, including the post-tool RL series (`research/`) and the run playbook (`docs/`);
+- GameTerm's calculator as a headless runner (`tools/calculate-runner`, Rust, fend-core MIT).
 
-**Not published:** the one-off gate and analysis scripts, the GameTerm calculator runner (not public yet; its
-interface is documented), the captured GameTerm envelope, the frozen task states, model weights and run outputs.
+**Not published:** the one-off gate and analysis scripts, the captured GameTerm envelope, the frozen task states,
+model weights and run outputs.
 
 ## Quickstart
 
@@ -95,7 +96,8 @@ The adopted adapter's recipe, on [tinygrad-arkey](https://github.com/JulianAbele
 
 ```bash
 export DAYCARE_TRAIN_TINYGRAD_PATH=/path/to/tinygrad-arkey DAYCARE_BASE_GGUF=/path/to/nemotron-3-nano-4b-bf16.gguf
-export DAYCARE_CALCULATE_RUNNER=/path/to/gameterm-calculate-runner
+(cd tools/calculate-runner && cargo build --release --locked)   # GameTerm's calculator, Rust 1.88
+export DAYCARE_CALCULATE_RUNNER=$PWD/tools/calculate-runner/target/release/gameterm-calculate-runner
 python -m daycare.nursery.rloo_posttool train --root out/r5 --states $S --envelope $E --updates 102 \
   --categories repair relay blocked --mix repair=0.75,relay=0.15,blocked=0.1 --mask none --reward graded \
   --wrong -1 --blank -1.5 --abstain relay=-0.5,repair=0,miss=0,empty=0,blocked=0 --length-weight 1.0 \
@@ -103,8 +105,8 @@ python -m daycare.nursery.rloo_posttool train --root out/r5 --states $S --envelo
   --compact 8,16 --keep-every 10 --train-seed 20260930 --protocol rloo-posttool-calculator-r5.md
 ```
 
-Not everything is public yet. The GameTerm calculator runner is not public; [RL training](docs/rl-training.md)
-documents its JSON-lines interface so you can substitute your own. The envelope (`$E`) and the frozen task states
+Not everything is public yet. The GameTerm calculator runner is: [`tools/calculate-runner`](tools/calculate-runner/)
+builds it, and its replies are byte-identical to run 5's runner. The envelope (`$E`) and the frozen task states
 (`$S`) are not published either. That page covers the one-update bit-exact check to run first, how the states are
 built, and the tests.
 
@@ -192,4 +194,5 @@ belong in this repo (see [notes/repo-principles.md](notes/repo-principles.md)).
 
 ## License
 
-[MIT](LICENSE). Research code, single maintainer.
+[MIT](LICENSE). Research code, single maintainer. `tools/calculate-runner` links fend-core (MIT); its notice is in
+[`tools/calculate-runner/THIRD_PARTY_NOTICES.md`](tools/calculate-runner/THIRD_PARTY_NOTICES.md).

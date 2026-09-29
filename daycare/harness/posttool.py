@@ -31,9 +31,9 @@ import numpy as np
 
 from .gameterm_wire import tool_content
 
-# GameTerm's calculate runner (JSON lines on stdin/stdout; docs/rl-training.md): `--runner` or DAYCARE_CALCULATE_RUNNER.
+# GameTerm's calculate runner (tools/calculate-runner; JSON lines on stdin/stdout): `--runner` or DAYCARE_CALCULATE_RUNNER.
 RUNNER = Path(os.environ.get('DAYCARE_CALCULATE_RUNNER') or '$DAYCARE_CALCULATE_RUNNER')
-# terminal/result.rs, ToolResult::Rejected: the stderr text for each calculate::normalize error
+# GameTerm's fixed `rejected` stderr (tools/calculate-runner rejection()) for each calculate::normalize error
 REJECTIONS = {'MalformedArguments': 'malformed arguments: see the tool schema',
               'MissingField': 'missing required field', 'OutOfRange': 'value out of range'}
 CALL = re.compile(r'<tool_call>\s*<function=([^>\s]+)>\s*(.*?)\s*</function>\s*</tool_call>', re.S)
@@ -46,8 +46,9 @@ class Calculator:
     def __init__(self, runner: Path = RUNNER):
         self.runner = Path(runner)
         if not self.runner.is_file():
-            raise FileNotFoundError(f'GameTerm calculate runner not found at {self.runner}: build it and pass '
-                                    '--runner or set DAYCARE_CALCULATE_RUNNER (docs/rl-training.md)')
+            raise FileNotFoundError(f'GameTerm calculate runner not found at {self.runner}: build it '
+                                    '(tools/calculate-runner: cargo build --release) and pass --runner or set '
+                                    'DAYCARE_CALCULATE_RUNNER (docs/rl-training.md)')
         self.process = subprocess.Popen([str(self.runner)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
 
     def run(self, arguments_json: str) -> dict:

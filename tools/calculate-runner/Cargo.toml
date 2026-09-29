@@ -1,0 +1,22 @@
+[package]
+name = "gameterm-calculate-runner"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+license = "MIT"
+description = "GameTerm's calculate tool as a headless JSON-lines runner (the calculator DayCare's post-tool RL trains against)"
+publish = false
+
+[lib]
+name = "calculate_runner"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gameterm-calculate-runner"
+path = "src/main.rs"
+
+[dependencies]
+# Pinned to the exact versions the run-5 runner was built with; the result bytes are part of the training envelope.
+fend-core = "=1.5.8"
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.151"
