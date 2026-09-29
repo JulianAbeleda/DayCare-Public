@@ -1,41 +1,69 @@
 # DayCare
 
-A small, dependency-light training stack for local language models. No torch, no
-transformers, no accelerate. Curriculum in, adapter out, with a measurement
-harness that refuses to call an unproven run a success.
+A small, dependency-light training stack for local language models, built on
+[tinygrad](https://github.com/tinygrad/tinygrad). No torch, no transformers, no accelerate. Curriculum in,
+adapter out, with a measurement discipline that refuses to call an unproven run a success.
 
-The point is to make the training loop **simple enough to read in an afternoon**:
-every stage is one file you can run on its own, and every artifact is a single
-self-contained XML file you can open in an editor.
+**Current focus:** can a small local model use tools well? The active work trains **Nemotron 3 Nano 4B** (thinking
+on) with RLOO on the turn *after* a tool call, inside [GameTerm](https://github.com/JulianAbeleda/gameterm): the
+calculator returned a result, or rejected the call, or the policy refused a file read. What does the model do next?
+The full record, including every failed run, is in the
+**[post-tool RL index](research/post-tool-rl-index.md)**.
 
-```text
-curriculum  ->  train  ->  evaluate  ->  rule  ->  promote
-   XML          LoRA       gate +      verdict    merge -> GGUF
-                           forgetting   vocabulary
-                           probe
-```
+## The discipline
 
-## Why it exists
+The code is small. The part worth copying is how a run earns the right to be believed
+([RL run playbook](docs/rl-run-playbook.md)):
 
-Most training stacks assume a cluster and a research team. This one assumes one
-GPU, one person, and a small model, and makes three things explicit that larger
-stacks leave implicit:
+1. **Predeclare.** Hypothesis, numeric predictions per gate, and stop triggers are written and committed before
+   the first counted update. Gates are paired stock-vs-adapter bootstrap intervals, clustered by source task.
+2. **Prove the outputs first.** One update, export, reload in a fresh process: the adapter must reproduce
+   bit-exactly before the long run starts.
+3. **Stop on triggers, not on feelings.** KL, entropy, length, capped-turn rate and reward drift are checked on a
+   rolling window; the loop stops itself and keeps the adapter.
+4. **Replay before changing a recipe.** A new loss or mask is replayed on the previous run's saved records first,
+   and each term's share of the gradient is measured.
+5. **Score exactly as declared.** A failed gate ends the experiment; no rescue runs. A run that improves its target
+   while retention regresses is a failure with a name.
+6. **Stop spinning.** Two consecutive runs failing the same gate for the same reason means diagnose, not a third
+   variant.
 
-1. **Not everything should be trained.** `nursery/route.py` classifies a lesson
-   as *file*, *retrieval*, or *weights* before a GPU is spent. Teaching a model a
-   fact that a text file already holds is the most common way to burn a run and
-   damage the model.
-2. **A run is not a success because the loss went down.** `harness/verdict.py`
-   has six outcomes and only one of them promotes. A run that improves its target
-   while a forgetting probe regresses is a failure with a name.
-3. **Artifacts are readable.** An adapter is one `.adapter.xml` — int8 tensors,
-   base64-inlined, with a manifest — not a directory of opaque blobs. It merges
-   into a GGUF you can serve with llama.cpp.
+## Post-tool RL status
+
+| Run | Outcome |
+|---|---|
+| 1 | not adopted: held-out success +7.0 points (pass), but blank answers 60 -> 95 (fail) |
+| 2 | failed: training collapsed (~update 40); the audit found a lost length brake and a KL-weight bug |
+| 3 | not adopted: +12.9 points (pass), blanks 53 against a limit of 50 (fail) |
+| 4 | stopped by the entropy trigger at update 98; information-only gates strong, retention -2 |
+| 5 | **adopted by owner exception**: every gate passed except one retention check (see below) |
+| 6 | replication of run 5 on a new seed: stopped by the entropy trigger at update 66 |
+
+**The adopted adapter (run 5)**, held-out against stock: repair after a rejected calculator call **+15.5 points**
+[+11.2, +20.0]; blank answers in the relay family 97 -> 16 of 2,620; blocked calls handled correctly **+12.3**
+[+7.7, +16.9]; an out-of-distribution blocked probe **+10.6** [+5.6, +15.4]. It is an exception, not a pass: the
+numeric retention check (one greedy sample per item) failed by one item. A follow-up
+[diagnosis](research/posttool-g3-numeric-diagnosis.md) found that loss fragile (level with stock at temperature 1
+over all 68 numeric items), with known costs: a lower calculator call rate on numeric items (-5.5 points) and one
+real reading shift. Run 6 did not reproduce it on a second seed because its entropy trigger fired first.
+
+## What is in this repository
+
+- the base training pipeline (SFT + LoRA + before/after gate), the verdict vocabulary and campaign harness, the
+  single-file artifact format, and the substrates (`daycare/`);
+- the research records, including the post-tool RL series (`research/`) and the run playbook (`docs/`).
+
+**Not yet published:** the RL loop behind the post-tool work (`rloo_tinygrad`, `rloo_posttool`, stop triggers,
+gate scripts) and its tests. The records reference those modules by name. No model weights, datasets or run
+outputs are published.
 
 ## Quickstart
 
 ```bash
 git clone https://github.com/JulianAbeleda/DayCare-Public && cd DayCare-Public
+
+# tests: no GPU, no model
+python -m pytest tests
 
 # training tinygrad (autograd + optim), pinned, no torch
 ./daycare/nursery/setup_trainer.sh
@@ -47,14 +75,13 @@ DAYCARE_MODEL_NAME=Ada DAYCARE_EPOCHS=6 python -m daycare.nursery.consolidate
 python -m daycare.nursery.distill curriculum.xml --save out.adapter.xml > run.xml
 
 # did it learn the target without losing anything else
-python -m daycare.nursery.evaluate ~/models/Qwen3-0.6B-Q8_0.gguf Ada
+python -m daycare.nursery.evaluate path/to/Qwen3-0.6B-Q8_0.gguf Ada
 
 # merge the adapter into a servable package
 python -m daycare.artifact.merge base.xpkg out.adapter.xml out.xpkg
 ```
 
-Nothing above needs a network. Training and merging need a GPU; the harness and
-the stub substrate run anywhere.
+Training and merging need a GPU and a local model; none of the commands above needs a network after setup.
 
 ## The pipeline
 
@@ -73,10 +100,9 @@ the stub substrate run anywhere.
 | campaign | `harness/campaign.py` | many attempts across a knob, never pooled into one average |
 | merge | `artifact/merge.py` | adapter + base -> servable GGUF |
 
-## Measurement
+## Verdict vocabulary
 
-The harness is not a wrapper around a loss curve. It implements a fixed verdict
-vocabulary, and the rules that decide between them are plain code:
+The rules that decide between these are plain code (`harness/verdict.py`):
 
 ```text
 PASS_PROMOTE           passed whole-system authority; may be promoted
@@ -87,39 +113,27 @@ MEASUREMENT_UNSTABLE   noise or environment made the result unusable
 REFUTED                closed by prior evidence
 ```
 
-Two rules it will not let you break: a run with no baseline cannot report an
-improvement, and a `simulated` run can never be promoted no matter how good its
-numbers look (`app/mode.py`).
+A run with no baseline cannot report an improvement, and a `simulated` run can never be promoted no matter how
+good its numbers look (`app/mode.py`). The post-tool runs add one more rule: an owner may adopt an adapter that
+failed a gate only in writing, recorded as an exception with its evidence and known costs, never as a pass.
 
-## Substrates
+## Substrates and artifacts
 
-Training and serving use different runtimes on purpose:
-
-- **Train** — a pinned upstream tinygrad (autograd + `nn/optim.py`), fetched by
-  `nursery/setup_trainer.sh`, wired through `nursery/trainer_env.py`.
-- **Serve** — `substrate/tinygrad_qwen3.py` (inference-only fork),
-  `substrate/llama_cpp.py` (spawns a local `llama-server`),
-  `substrate/remote.py` (a GPU host over ssh), or `substrate/stub.py`
-  (deterministic, model-free, for tests).
-
-Everything speaks one protocol: `generate(prompt, temperature) -> str`
-(`substrate/base.py`), so a test suite runs against the stub with no model
-present.
-
-## Artifacts
-
-One file per artifact, no safetensors, no JSON sprawl:
-
-- `.adapter.xml` — int8-quantized tensors, base64-inlined, plus a manifest
-  (`artifact/save.py`)
-- `.xpkg` — a model package directory with tokenizer and weights
-  (`examples/daycare-model.xpkg/`)
-- `.gguf` — emitted for llama.cpp and NVIDIA serving (`artifact/emit_gguf.py`)
+- **Train**: a pinned tinygrad (autograd + `nn/optim.py`) fetched by `nursery/setup_trainer.sh`, wired through
+  `nursery/trainer_env.py`. The post-tool work samples and trains on one stack,
+  [tinygrad-arkey](https://github.com/JulianAbeleda/tinygrad-arkey) (`exp`).
+- **Serve**: `substrate/tinygrad_qwen3.py`, `substrate/llama_cpp.py` (a local `llama-server`), `substrate/remote.py`
+  (a GPU host over ssh), or `substrate/stub.py` (deterministic, model-free, for tests). All speak
+  `generate(prompt, temperature) -> str` (`substrate/base.py`).
+- **Artifacts**: one `.adapter.xml` per adapter (int8 tensors, base64-inlined, with a manifest; `artifact/save.py`),
+  `.xpkg` model packages (`examples/daycare-model.xpkg/`), and `.gguf` for llama.cpp (`artifact/emit_gguf.py`).
 
 ## Research notes
 
 The reasoning behind the code, under `research/`:
 
+- **[Post-tool RL index](research/post-tool-rl-index.md)**: runs 1-6, the side investigations and the literature
+  report, in order
 - [Training Map](research/training-map.md) — the whole territory
 - [Fact vs Weight](research/fact-vs-weight.md) — what should never be trained
 - [State vs Weights](research/state-vs-weights.md) — where knowledge belongs
@@ -153,4 +167,4 @@ belong in this repo (see [notes/repo-principles.md](notes/repo-principles.md)).
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE). Research code, single maintainer.
