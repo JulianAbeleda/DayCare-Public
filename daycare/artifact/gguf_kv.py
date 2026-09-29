@@ -11,14 +11,17 @@ Types are what make the XML artifact self-describing, so we capture them.
 
 The tinygrad import is confined to `read_gguf` (below), not module scope: only
 the read direction needs tinygrad's primitive readers. The write direction and
-the format constants (MAGIC, GGML_FOR_QUANT, ...) are pure struct/stdlib, and
+the format constants use struct and the NumPy-only artifact codec registry, and
 daycare/artifact/export.py's preflight (can_export) needs exactly those without
 paying the vendored-tinygrad dependency -- see trainer_env.use_train_tinygrad.
 """
 from __future__ import annotations
 
 import io
+import json
 import struct
+
+from .codec import QUANT
 
 # GGUF KV type codes -- mirrors tinygrad's `readers` table.
 NAMES = {0: "u8", 1: "i8", 2: "u16", 3: "i16", 4: "u32", 5: "i32", 6: "f32",
@@ -28,8 +31,8 @@ _PACK = {0: "<B", 1: "<b", 2: "<H", 3: "<h", 4: "<I", 5: "<i", 6: "<f",
          7: "<?", 10: "<Q", 11: "<q", 12: "<d"}
 
 # ggml tensor data types we emit
-GGML_F32, GGML_F16 = 0, 1
-GGML_FOR_QUANT = {"f16": GGML_F16, "f32": GGML_F32}
+GGML_FOR_QUANT = {name: spec.ggml_type for name, spec in QUANT.items() if spec.ggml_type is not None}
+GGML_F32, GGML_F16 = GGML_FOR_QUANT["f32"], GGML_FOR_QUANT["f16"]
 
 MAGIC, VERSION, ALIGNMENT = b"GGUF", 3, 32
 
@@ -122,10 +125,17 @@ def w_kv(f, key: str, typ: int, val) -> None:
 # ----------------------------------------------------- text <-> value ----
 
 def to_text(typ: int, v) -> str:
+    if typ == 9:
+        return json.dumps(v, ensure_ascii=False, separators=(",", ":"))
     return "true" if (typ == 7 and v) else "false" if typ == 7 else str(v)
 
 
 def from_text(typ: int, s: str):
+    if typ == 9:
+        item_type, values = json.loads(s)
+        if item_type not in CODES.values() or item_type == 9 or not isinstance(values, list):
+            raise ValueError("invalid GGUF array metadata")
+        return item_type, values
     if typ == 8:
         return s
     if typ == 7:

@@ -17,12 +17,13 @@ from . import manifest as mf
 def write_adapter(tensors: dict[str, np.ndarray], meta: dict, path: str, quant: str = "int8") -> None:
     specs = []
     for name, arr in tensors.items():
-        arr = np.ascontiguousarray(np.asarray(arr, dtype=np.float32))
-        payload, scale = codec.quantize(arr, quant)
+        arr = np.ascontiguousarray(np.asarray(arr))
+        tensor_quant = codec.resolve_quant(arr, quant)
+        payload, scale = codec.quantize(arr, tensor_quant)
         b64 = codec.ENCODING["base64"][0](payload)
         specs.append(index.TensorSpec(
-            name=name, dtype=quant, shape=tuple(arr.shape),
-            quant=quant, scale=scale, encoding="base64", data=b64,
+            name=name, dtype=tensor_quant, shape=tuple(arr.shape),
+            quant=tensor_quant, scale=scale, encoding="base64", data=b64,
         ))
     tensors_el = index.to_element(specs, encoding="base64")
     man = mf.AdapterManifest(
@@ -31,6 +32,11 @@ def write_adapter(tensors: dict[str, np.ndarray], meta: dict, path: str, quant: 
         loss_start=meta["loss_start"], loss_end=meta["loss_end"],
         eval_metric=meta["eval_metric"], eval_before=meta["eval_before"],
         eval_after=meta["eval_after"], eval_gate=meta["eval_gate"],
+        method=meta.get("method", "lora"),
+        source_sha256=meta.get("source_sha256", ""),
+        architecture=meta.get("architecture", ""),
+        factors=list(meta.get("factors", [])),
+        target_map=list(meta.get("target_map", [])),
     )
     os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
     mf.write(man, path, tensors_el=tensors_el)

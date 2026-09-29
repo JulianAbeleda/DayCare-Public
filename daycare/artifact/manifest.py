@@ -23,7 +23,7 @@ class AdapterManifest:
     subject: str
     base: str
     r: int
-    alpha: int
+    alpha: float
     last_k: int
     targets: list[str]
     epochs: int
@@ -34,6 +34,10 @@ class AdapterManifest:
     eval_after: str
     eval_gate: str
     method: str = "lora"
+    source_sha256: str = ""
+    architecture: str = ""
+    factors: list[str] = field(default_factory=list)
+    target_map: list[dict] = field(default_factory=list)
     tensors_el: ET.Element | None = None
 
     def to_xml(self) -> ET.Element:
@@ -48,6 +52,27 @@ class AdapterManifest:
             **{"last-k": str(self.last_k)},
             targets=",".join(self.targets),
         )
+        ET.SubElement(
+            root,
+            "source",
+            sha256=self.source_sha256,
+            architecture=self.architecture,
+        )
+        factors = ET.SubElement(root, "factors")
+        for name in self.factors:
+            ET.SubElement(factors, "factor", name=name)
+        targets = ET.SubElement(root, "target-map")
+        for item in self.target_map:
+            shape = item.get("shape", ())
+            ET.SubElement(
+                targets,
+                "target",
+                adapter=str(item.get("index", "")),
+                tensor=str(item.get("tensor", "")),
+                shape="x".join(str(v) for v in shape),
+                layer=str(item.get("layer", "")),
+                name=str(item.get("target", "")),
+            )
         training = ET.SubElement(
             root,
             "training",
@@ -72,12 +97,26 @@ class AdapterManifest:
         training = el.find("training")
         ev = training.find("eval")
         tensors_el = el.find("tensors")
+        source = el.find("source")
+        factor_el = el.find("factors")
+        target_el = el.find("target-map")
+        target_map = []
+        if target_el is not None:
+            for node in target_el.findall("target"):
+                shape = tuple(int(v) for v in node.get("shape", "").split("x") if v)
+                target_map.append({
+                    "index": int(node.get("adapter", "0")),
+                    "tensor": node.get("tensor", ""),
+                    "shape": shape,
+                    "layer": int(node.get("layer", "0")),
+                    "target": node.get("name", ""),
+                })
         return AdapterManifest(
             subject=el.get("subject"),
             base=el.get("base"),
             method=el.get("method", "lora"),
             r=int(lora.get("r")),
-            alpha=int(lora.get("alpha")),
+            alpha=float(lora.get("alpha")),
             last_k=int(lora.get("last-k")),
             targets=lora.get("targets").split(","),
             epochs=int(training.get("epochs")),
@@ -87,6 +126,11 @@ class AdapterManifest:
             eval_before=ev.get("before"),
             eval_after=ev.get("after"),
             eval_gate=ev.get("gate"),
+            source_sha256=source.get("sha256", "") if source is not None else "",
+            architecture=source.get("architecture", "") if source is not None else "",
+            factors=[node.get("name", "") for node in factor_el.findall("factor")]
+                    if factor_el is not None else [],
+            target_map=target_map,
             tensors_el=tensors_el,
         )
 
@@ -112,9 +156,12 @@ class ModelManifest:
     kv: list[tuple[str, str, str]] = field(default_factory=list)
     tokenizer_ref: str = ""
     tensors_ref: str = ""
+    source_sha256: str = ""
+    weights_sha256: str = ""
 
     def to_xml(self) -> ET.Element:
         root = ET.Element("model", name=self.name, arch=self.arch, quant=self.quant)
+        ET.SubElement(root, "source", sha256=self.source_sha256, weights_sha256=self.weights_sha256)
         config = ET.SubElement(root, "config")
         for key, typ, val in self.kv:
             el = ET.SubElement(config, "kv", key=key, type=typ)
@@ -139,6 +186,8 @@ class ModelManifest:
             kv=kv,
             tokenizer_ref=tokenizer_el.get("ref") if tokenizer_el is not None else "",
             tensors_ref=tensors_el.get("ref") if tensors_el is not None else "",
+            source_sha256=el.find("source").get("sha256", "") if el.find("source") is not None else "",
+            weights_sha256=el.find("source").get("weights_sha256", "") if el.find("source") is not None else "",
         )
 
     def get(self, key: str, default=None) -> str | None:
