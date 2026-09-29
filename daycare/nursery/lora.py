@@ -1,4 +1,4 @@
-"""LoRA for tinygrad Linear layers (research/name-learning-scope.md).
+"""LoRA for tinygrad Linear layers.
 
 The trainable delta on a frozen base: y = x@W + (x@A)@B * (alpha/r), with W frozen.
 A is small-random, B is zero -> the initial delta is zero, so training starts from
@@ -20,8 +20,11 @@ class LoRALinear:
     def __init__(self, base, r: int = 16, alpha: int = 32):
         self.base = base  # nn.Linear, weight frozen by freeze_model()
         out_f, in_f = base.weight.shape
-        self.A = (Tensor.randn(r, in_f) * (1.0 / in_f) ** 0.5)  # small random
-        self.B = Tensor.zeros(out_f, r)                          # zero -> delta=0 at start
+        # Realized buffers from the start: a lazy random A lets tinygrad's
+        # gradient() merge two same-shaped adapters, and TinyJit bakes a lazy
+        # zero B into its kernels so later optimizer writes are never read.
+        self.A = (Tensor.randn(r, in_f) * (1.0 / in_f) ** 0.5).contiguous().realize()  # small random
+        self.B = Tensor.zeros(out_f, r).contiguous().realize()                          # delta=0 at start
         self.scale = alpha / r
 
     def __call__(self, x: Tensor) -> Tensor:
