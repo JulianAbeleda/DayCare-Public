@@ -48,6 +48,11 @@ import xml.etree.ElementTree as ET
 from . import artifact, campaign, verdict as vd
 
 
+# The simulated backend's step budget: the "quick look" care recipe (2,000 steps). The live
+# backend ignores it (its curriculum decides the length).
+_RECIPES = {"care": [{"id": "quick", "max": "2000"}]}
+
+
 def _run_once(workload: str, *, live: bool = False) -> tuple[list[dict], str]:
     """Execute one run through the app's Run seam and drain its events.
 
@@ -62,13 +67,11 @@ def _run_once(workload: str, *, live: bool = False) -> tuple[list[dict], str]:
     offers a concept, it never forces the backend that trains it.
     """
     from ..app import run as run_mod
-    from ..app.sources import get_source
 
-    src = get_source("mock")
     if live:
-        r = run_mod.start(src.values(), src.recipes(), concept=workload, mechanism="distill")
+        r = run_mod.start({}, _RECIPES, concept=workload)
     else:
-        r = run_mod.start(src.values(), src.recipes())
+        r = run_mod.start({}, _RECIPES)
     events = list(run_mod.events(r.id))
     return events, getattr(r, "authority", "simulated")
 

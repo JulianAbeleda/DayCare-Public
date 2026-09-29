@@ -79,6 +79,9 @@ python -m daycare.nursery.evaluate path/to/Qwen3-0.6B-Q8_0.gguf Ada
 
 # merge the adapter into a servable package
 python -m daycare.artifact.merge base.xpkg out.adapter.xml out.xpkg
+
+# rule a run and emit its ledger (simulated backend: runs anywhere, never promotes)
+python -m daycare.harness --workload "repo idiom" --repeats 3 --out ledger.xml
 ```
 
 Training and merging need a GPU and a local model; none of the commands above needs a network after setup.
