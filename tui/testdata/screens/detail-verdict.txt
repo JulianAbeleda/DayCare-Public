@@ -1,0 +1,8 @@
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ 5  Verdict · posttool-fixture-001                                            │
+│ fail (G3) · a failed gate ends the experiment                                │
+│                                                                              │
+│ Verdict: fail                                                                │
+│ Rule: one failed gate fails the run. An open gate keeps it open.             │
+│ ✗ failed: G3. No rescue runs.                                                │
+╰──────────────────────────────────────────────────────────────────────────────╯

@@ -1,0 +1,24 @@
+♡ DayCare                                                                 (•́︿•̀)
+╭──────────────────────────────────────────────────────────────────────────────╮
+│   ✓ 1  Ready       everything a run needs is here                            │
+│   ✓ 2  Predeclare  posttool-fixture-001 · 9 gates                            │
+│ ▸ ⚠ 3  Train       █░░░░░░░░░ 6 of 102 · stopped: answer variety past its l… │
+│   ● 4  Score       2 pass · 1 fail · 6 open                                  │
+│   ✗ 5  Verdict     fail (G3) · a failed gate ends the experiment             │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ 3  Train · posttool-fixture-001                                              │
+│ ⚠ stopped by a trigger  stopped █░░░░░░░░░ 6 of 102                          │
+│ ⚠ stopped: entropy 0.44 < 0.4675 (mean of the last 3 stepped updates)        │
+│                                                                              │
+│ Stop triggers                                                                │
+│ last 3 stepped updates against the first 3 · 6 rows                          │
+│    METRIC                                  NEAR LIMIT  NOW     LIMIT         │
+│ ✓  drift from stock  kl                    ███░░░░░░░  0.007   > 0.025       │
+│ ⚠  answer variety  entropy                 ██████████  0.44    < 0.4675      │
+│ ✓  answer length  finished_length          ███████░░░  643.3   > 917.5       │
+│ …                                                                            │
+│ enter: start, stop, the trigger window, the log                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+ ↑↓ step · enter open · q quit                          run posttool-fixture-001

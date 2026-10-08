@@ -1,0 +1,32 @@
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ 3  Train · posttool-fixture-001                                              │
+│ █░░░░░░░░░ 6 of 102 · stopped: answer variety past its limit                 │
+│                                                                              │
+│ ⚠ stopped by a trigger  stopped █░░░░░░░░░ 6 of 102                          │
+│ ⚠ stopped: entropy 0.44 < 0.4675 (mean of the last 3 stepped updates)        │
+│                                                                              │
+│ Stop triggers                                                                │
+│ last 3 stepped updates against the first 3 · 6 rows                          │
+│    METRIC                                  NEAR LIMIT  NOW     LIMIT         │
+│ ✓  drift from stock  kl                    ███░░░░░░░  0.007   > 0.025       │
+│ ⚠  answer variety  entropy                 ██████████  0.44    < 0.4675      │
+│ ✓  answer length  finished_length          ███████░░░  643.3   > 917.5       │
+│ ✓  turns cut at the cap  capped_turn_rate  ░░░░░░░░░░  0       > 0.05        │
+│ ✓  reward  mean_reward                     ██████░░░░  0.8333  < 0.52        │
+│                                                                              │
+│ Adapter                                                                      │
+│ ⚠ recorded, but not in the folder tui/testdata/fixture/posttool-fixture-001… │
+│ ✓ reloads bit-exactly  32 rows                                               │
+│ adapter sha256 aaaaaaaaaaaaaaaa                                              │
+│ revision 0123abcd                                                            │
+│ model sha256 2126a5e8                                                        │
+│                                                                              │
+│ Last updates                                                                 │
+│ STEP  KL     ENTROPY  REWARD  LENGTH                                         │
+│ 1     0.004  0.55     0.7     606.7                                          │
+│ 2     0.005  0.56     0.72    616.7                                          │
+│ 3     0.005  0.54     0.74    611.7                                          │
+│ 4     0.006  0.5      0.8     626.7                                          │
+│ 5     0.007  0.42     0.84    646.7                                          │
+│ 6     0.008  0.4      0.86    656.7                                          │
+╰──────────────────────────────────────────────────────────────────────────────╯

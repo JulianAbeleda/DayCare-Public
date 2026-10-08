@@ -1,0 +1,24 @@
+♡ DayCare                                                                 (•́︿•̀)
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ 4  Score · posttool-fixture-001                                              │
+│ 2 pass · 1 fail · 6 open                                                     │
+│ Score G2a · lo and hi are the interval; both empty for a count               │
+│ ▸ diff       -1▏                                                             │
+│   lo                                                                         │
+│   hi                                                                         │
+│   note                                                                       │
+│ enter next field, then save · esc cancel                                     │
+│                                                                              │
+│    GATE                                MEASURED                              │
+│ ✓  G1    word-problem repair           +15.5 [+11.2, +20.0]                  │
+│ ✓  G1b   relay                         +0.8 [-0.6, +2.1]                     │
+│ ○  G2a   relay-family blanks           not scored                            │
+│ ○  G2b   relay-family wrong answers    not scored                            │
+│ ○  G5L   long-number relay/repair      not scored                            │
+│ ○  G5B   blocked, rule (c)             not scored                            │
+│ ○  G6    blocked, OOD selection probe  not scored                            │
+│ ○  G7    numeric retention, T=1        not scored                            │
+│ ✗  G3    plain retention losses, T=0   count 1                               │
+│                                                                              │
+
+ ↑↓ move · enter pick · esc back · x stop · q quit      run posttool-fixture-001

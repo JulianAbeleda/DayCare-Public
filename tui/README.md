@@ -19,9 +19,9 @@ export DAYCARE_PYTHON=/path/to/venv/bin/python  # an interpreter with numpy, jin
 ./daycare-tui
 ```
 
-Keys: `1` setup, `2` runs, `3` adapters, `4` job, `j`/`k` move or scroll, `enter` open a run, `esc` back,
-`s` start the opened run, `x` stop it, `g` generate the selected missing item, `t` plain or technical wording,
-`r` refresh, `q` quit. The footer lists them.
+Keys: `↑` `↓` (or `j` `k`) move, `enter` opens a step or picks a row inside it, `esc` goes back (or cancels a
+form), `x` stops the run started here, `q` quits. Five keys. Generate, start, score and adopt are rows inside
+a step.
 
 The look: a Charm-style palette (pink, purple, cyan, mint) as lipgloss adaptive tokens in
 [`internal/ui/theme.go`](internal/ui/theme.go), rounded boxes with gradient titles, glyphs for every outcome
@@ -31,21 +31,30 @@ follows the state: `(˘ω˘) zz` when the nursery is empty, `(•ᴗ•)` idle, 
 `(≧◡≦)♡` when a run passed, `(•́︿•̀)` when a trigger crossed or a gate failed. Colours degrade through lipgloss
 to the terminal's profile and disappear under `NO_COLOR`; the layout fits 80x24 (long cells are cut with `…`).
 
-Screens:
+One screen, a checklist. The five steps are the playbook's sections (docs/rl-run-playbook.md). The top box
+shows each step with a mark and one line. The bottom box is the chosen step's summary. `enter` opens the step's
+full view: its rows first, then everything it knows. The cursor starts on the first step that is not done. The
+footer names the run the checklist is about: the one you opened in step 2, else a run in progress, else the
+last one.
 
-1. **Setup.** Each line is a check, not a guess: a file, an importable module, an executable, a clean checkout.
-   A missing item shows the fix. Two items have a generator (`g`): a frozen task set (`posttool_tasks freeze`,
-   no private suites, no Countdown, no network) and a predeclaration (template `run5`). The GameTerm envelope
-   cannot be generated; the states need a GPU harvest, and the fix text gives both commands.
-2. **Runs.** One row per run folder: state, updates done / planned, verdict, and the gates as pass / fail / open.
-3. **Run.** The hypothesis, each gate's rule and prediction next to what was measured, the stop-trigger window
-   (the last N stepped updates against the first N, with each limit and whether it was crossed), the trip
-   reason, the adapter and the bit-exact reload check. Technical mode adds the recipe, the digests and the last
-   update rows.
-4. **Adapters.** The runs that saved an adapter (or recorded one that is no longer in the folder).
-5. **Job.** The process this machine started for the opened run, with the tail of its log.
+| # | Step | Done when | The line says |
+|---|---|---|---|
+| 1 | Ready | `setup.ready` | `everything a run needs is here`, or `N things missing` |
+| 2 | Predeclare | the run has gates | run id and gate count; `⚠ no predeclaration` for a folder without one |
+| 3 | Train | the run finished (`complete`) | a bar `n of N`; the trigger that stopped it |
+| 4 | Score | every gate has a result | `2 pass · 1 fail · 6 open` |
+| 5 | Verdict | the verdict is pass or adopted | the verdict word and the gate that decided it |
 
-Plain mode uses short literal words (`drift from stock (KL)`); technical mode uses the record's own names.
+Full views: **Ready** lists the missing checks first, each with its fix, and a "Generate" row for the task set
+and the predeclaration. **Predeclare** has "New run from the run5 recipe" and every run folder to open, then
+the hypothesis, the record and the recipe. **Train** has "Start training" or "Stop the run", then the stop
+triggers, the adapter with the bit-exact reload check and its digests, the last updates, and the log.
+**Score** has one row per open gate; `enter` opens a form (`diff`, `lo`, `hi`, `note`) that runs the seam's
+`score`. **Verdict** has the rule, and an "Adopt" row (`by`, `exception`) once every gate is scored. The seam
+refuses a rescored gate and an early adoption; the screen shows its refusal.
+
+Main lines use plain words only. Full views show the plain word with the record's own name beside it, muted
+(`answer variety  entropy`). There is no technical mode and no adapters list: the adapter is part of Train.
 
 ## Agent mode: the JSON contract
 

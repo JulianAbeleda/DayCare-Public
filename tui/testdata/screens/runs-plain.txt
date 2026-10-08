@@ -1,7 +1,0 @@
-╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Runs                                                                                             │
-│ RUN                   STATE                               UPDATES           VERDICT  GATES     … │
-│ posttool-fixture-001  ⚠ stopped by a trigger at update 6  █░░░░░░░░░ 6/102  fail     ✓ 2  ✗ 1  … │
-│ posttool-fixture-002  ⏸ waiting to start                  0                 open     ○ 9       … │
-│ posttool-fixture-003  ● in progress                       █░░░░░░░░░ 2/20   none     no gates  … │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────╯

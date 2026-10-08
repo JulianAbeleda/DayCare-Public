@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -86,41 +87,59 @@ func loadSample(t *testing.T) sample {
 	return s
 }
 
-// program renders the whole frame: runs screen, open the second row, toggle the mode, resize.
-func program(s sample, technical bool, width, height int) string {
-	m := New(seam.Client{}, jobs.Store{})
-	next, _ := m.Update(runsMsg{&s.runs, nil})
-	next, _ = next.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("2")})
-	next, _ = next.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
-	next, _ = next.Update(runMsg{&s.stopped, nil})
-	if technical {
-		next, _ = next.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
+func press(m tea.Model, k string) tea.Model {
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(k)}
+	switch k {
+	case "enter":
+		msg = tea.KeyMsg{Type: tea.KeyEnter}
+	case "esc":
+		msg = tea.KeyMsg{Type: tea.KeyEsc}
 	}
-	next, _ = next.Update(tea.WindowSizeMsg{Width: width, Height: height})
-	return next.View()
+	next, _ := m.Update(msg)
+	return next
 }
+
+// program feeds the model the seam's answers in the order they arrive on a real start, then sizes it.
+func program(s sample, setup *seam.Setup, run *seam.Run, job *jobs.Job, tail []string) tea.Model {
+	var m tea.Model = New(seam.Client{}, jobs.Store{})
+	for _, msg := range []tea.Msg{setupMsg{setup, nil}, runsMsg{&s.runs, nil}, tea.WindowSizeMsg{Width: 80, Height: 24}} {
+		m, _ = m.Update(msg)
+	}
+	if run != nil {
+		m, _ = m.Update(runMsg{run, nil})
+	}
+	if job != nil {
+		m, _ = m.Update(jobMsg{job, tail})
+	}
+	return m
+}
+
+func ready() *seam.Setup {
+	return &seam.Setup{Kind: "setup", Ready: true, Checks: []seam.Check{{ID: "numpy", Label: "numpy importable", OK: true, Detail: "/usr/bin/python3"}}}
+}
+
+func facts(m tea.Model) Facts { return m.(Model).f }
 
 // The plain goldens are what NO_COLOR shows: lipgloss strips every colour under the Ascii profile.
 func TestScreensPlain(t *testing.T) {
 	lipgloss.SetColorProfile(termenv.Ascii)
 	s := loadSample(t)
+	stopped := program(s, ready(), &s.stopped, nil, nil)
+	waiting := program(s, ready(), &s.waiting, nil, nil)
+	running := program(s, ready(), &s.running, s.job, s.tail)
+	notReady := program(s, setupSample(), nil, nil, nil)
+	scoring := press(press(press(press(stopped, "j"), "enter"), "enter"), "-1")
 	for name, got := range map[string]string{
-		"status-plain.txt":          StatusView(setupSample(), 1, false, 100),
-		"status-technical.txt":      StatusView(setupSample(), 3, true, 100),
-		"runs-plain.txt":            RunsView(&s.runs, 0, false, 100),
-		"runs-technical.txt":        RunsView(&s.runs, 2, true, 140),
-		"runs-empty.txt":            RunsView(&seam.Runs{Root: "/home/u/runs"}, 0, false, 60),
-		"run-stopped-plain.txt":     RunView(&s.stopped, false, 120),
-		"run-stopped-technical.txt": RunView(&s.stopped, true, 120),
-		"run-predeclared.txt":       RunView(&s.waiting, false, 100),
-		"run-in-progress.txt":       RunView(&s.running, false, 100),
-		"adapters-plain.txt":        AdaptersView(&s.runs, false, 100),
-		"adapters-technical.txt":    AdaptersView(&s.runs, true, 120),
-		"job-plain.txt":             JobsView("posttool-fixture-003", s.job, s.tail, false, 100),
-		"job-technical.txt":         JobsView("posttool-fixture-003", s.job, s.tail, true, 140),
-		"job-none.txt":              JobsView("", nil, nil, false, 80),
-		"program-run-technical.txt": program(s, true, 120, 60),
-		"program-run-80x24.txt":     program(s, false, 80, 24),
+		"checklist-stopped.txt":     stopped.View(),
+		"checklist-predeclared.txt": waiting.View(),
+		"checklist-training.txt":    running.View(),
+		"checklist-not-ready.txt":   notReady.View(),
+		"score-form-80x24.txt":      scoring.View(),
+		"detail-ready.txt":          DetailView(facts(notReady), 0, 0, 80),
+		"detail-predeclare.txt":     DetailView(facts(stopped), 1, 0, 80),
+		"detail-train.txt":          DetailView(facts(stopped), 2, 0, 80),
+		"detail-score.txt":          DetailView(facts(stopped), 3, 0, 80),
+		"detail-verdict.txt":        DetailView(facts(stopped), 4, 0, 80),
 	} {
 		golden(t, name, got)
 	}
@@ -132,29 +151,97 @@ func TestScreensStyled(t *testing.T) {
 	lipgloss.SetHasDarkBackground(true)
 	defer lipgloss.SetColorProfile(termenv.Ascii)
 	s := loadSample(t)
-	golden(t, "styled/run-stopped-plain.ansi", RunView(&s.stopped, false, 100))
-	golden(t, "styled/program-run-80x24.ansi", program(s, false, 80, 24))
-	golden(t, "styled/status-plain.ansi", StatusView(setupSample(), 1, false, 100))
+	stopped := program(s, ready(), &s.stopped, nil, nil)
+	golden(t, "styled/checklist-stopped.ansi", stopped.View())
+	golden(t, "styled/checklist-not-ready.ansi", program(s, setupSample(), nil, nil, nil).View())
+	golden(t, "styled/detail-score.ansi", DetailView(facts(stopped), 3, 0, 80))
 }
 
-func TestModelNavigation(t *testing.T) {
+// Every frame fits 80x24: 24 lines, none wider than 80 cells.
+func TestFramesFit80x24(t *testing.T) {
 	lipgloss.SetColorProfile(termenv.Ascii)
 	s := loadSample(t)
-	m := New(seam.Client{}, jobs.Store{})
-	next, _ := m.Update(runsMsg{&s.runs, nil})
-	next, _ = next.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("2")})
-	next, _ = next.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
-	next, _ = next.Update(runMsg{&s.stopped, nil})
-	next, _ = next.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
-	got := next.(Model)
-	if got.screen != screenRun || !got.technical || got.jobID != "posttool-fixture-001" || got.mood() != faceWorried {
-		t.Fatalf("model state wrong: screen %d technical %t job %q mood %q", got.screen, got.technical, got.jobID, got.mood())
+	for _, m := range []tea.Model{program(s, ready(), &s.stopped, nil, nil), program(s, ready(), &s.running, s.job, s.tail),
+		program(s, setupSample(), nil, nil, nil), press(program(s, ready(), &s.stopped, nil, nil), "enter")} {
+		lines := strings.Split(m.View(), "\n")
+		if len(lines) != 24 {
+			t.Fatalf("%d lines", len(lines))
+		}
+		for _, l := range lines {
+			if w := lipgloss.Width(l); w > 80 {
+				t.Fatalf("line is %d wide: %q", w, l)
+			}
+		}
 	}
-	next, _ = next.Update(tea.KeyMsg{Type: tea.KeyEsc})
-	if next.(Model).screen != screenRuns {
-		t.Fatal("esc must return to the runs screen")
+}
+
+func TestStepStates(t *testing.T) {
+	lipgloss.SetColorProfile(termenv.Ascii)
+	s := loadSample(t)
+	marks := func(m tea.Model) string {
+		out := ""
+		for _, st := range steps {
+			mk, _ := st.line(facts(m))
+			out += mk + " "
+		}
+		return out
 	}
-	if m.mood() != faceSleep {
-		t.Fatalf("an empty nursery sleeps, got %q", m.mood())
+	for name, c := range map[string]struct {
+		m      tea.Model
+		marks  string
+		cursor int
+	}{
+		"stopped":     {program(s, ready(), &s.stopped, nil, nil), "pass pass crossed run fail ", 2},
+		"predeclared": {program(s, ready(), &s.waiting, nil, nil), "pass pass open open open ", 2},
+		"no gates":    {program(s, ready(), &s.running, s.job, s.tail), "pass crossed run open open ", 1},
+		"not ready":   {program(s, setupSample(), nil, nil, nil), "fail open open open open ", 0},
+	} {
+		if got := marks(c.m); got != c.marks || c.m.(Model).cursor != c.cursor {
+			t.Errorf("%s: marks %q cursor %d", name, got, c.m.(Model).cursor)
+		}
+	}
+	if New(seam.Client{}, jobs.Store{}).mood() != faceSleep {
+		t.Fatal("an empty nursery sleeps")
+	}
+}
+
+func TestKeysAndForms(t *testing.T) {
+	lipgloss.SetColorProfile(termenv.Ascii)
+	s := loadSample(t)
+	m := program(s, ready(), &s.stopped, nil, nil)
+	if m.(Model).mood() != faceWorried {
+		t.Fatal("a failed gate worries")
+	}
+	m = press(press(m, "j"), "enter") // step 4, open
+	if !m.(Model).open || m.(Model).cursor != 3 {
+		t.Fatal("enter opens the step under the cursor")
+	}
+	m = press(m, "enter") // Score G2a
+	if got := m.(Model); got.form != "score" || got.gate != "G2a" {
+		t.Fatalf("enter on a gate row opens its score form: %q %q", got.form, got.gate)
+	}
+	m = press(press(press(m, "x"), "enter"), "q") // typed, not keys, inside the form
+	if got := m.(Model); got.form != "score" || got.focus != 1 || got.inputs[0].Value() != "x" || got.inputs[1].Value() != "q" {
+		t.Fatalf("form keys: focus %d %q %q", got.focus, got.inputs[0].Value(), got.inputs[1].Value())
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace, Runes: []rune(" ")})
+	if v := m.(Model).inputs[1].Value(); v != "q " {
+		t.Fatalf("a space is typed into the field, got %q", v)
+	}
+	m = press(m, "esc")
+	if m.(Model).form != "" || !m.(Model).open {
+		t.Fatal("esc closes the form and keeps the step open")
+	}
+	m = press(m, "esc")
+	if m.(Model).open {
+		t.Fatal("esc goes back to the list")
+	}
+	if verdictActions(facts(m)) != nil {
+		t.Fatal("no adopt row while gates are open")
+	}
+	scored := s.stopped
+	scored.GateTable = []seam.Gate{{ID: "G1", Result: "pass"}}
+	if len(verdictActions(Facts{Run: &scored})) != 1 {
+		t.Fatal("the adopt row appears when every gate is scored")
 	}
 }
