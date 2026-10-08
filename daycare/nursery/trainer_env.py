@@ -78,3 +78,12 @@ def use_train_tinygrad():
     import tinygrad  # noqa: F401
 
     return tinygrad
+
+
+def selected_model(path: str | None = None) -> str:
+    """Resolve the explicit learning base, with the legacy environment fallback."""
+    from pathlib import Path
+    value = path or os.environ.get("DAYCARE_BASE_GGUF") or os.environ.get("DAYCARE_MODEL_GGUF")
+    if not value:
+        raise ValueError("select a GGUF with --model or DAYCARE_BASE_GGUF")
+    return str(Path(value).expanduser().resolve())
