@@ -81,6 +81,19 @@ verdict scored exactly as declared, and no rescue runs. Failures are kept as fai
 - Literature: [controlling reasoning length in RL](reports/rl-length-control-literature-20260927.md) (DAPO,
   Dr. GRPO, SimpleTIR, L1 and others), written after run 1.
 
+- [Thinking on vs off for tool use](thinking-on-off-tool-use.md): a review of every on/off comparison on record.
+  Thinking's largest documented effect is on post-tool turns (after a miss 2 -> 33/64, after a rejection 0 -> 15/64),
+  not on first calls; no public benchmark has a thinking-off arm (that run was cancelled).
+
+## Before the series: the RLVR engineering gates
+
+- [Finite-action RLVR smoke](rlvr-smoke.md): the first on-policy RLOO update through the tinygrad training path,
+  over a four-action calculator menu. The learning and persistence gate passed; the near-ceiling task showed no
+  meaningful improvement, by design of the gate.
+- [Native-response RLVR pilot](rlvr-responses.md): free-generation RLOO through GameTerm's headless harness. One real
+  update, exact XML reload, identical greedy answers before and after; no sampled trajectory called a tool, so the
+  live-calculator gate failed and the series moved to the post-tool turn.
+
 ## Current state
 
 One adapter is adopted: **run 5, by owner exception**, recorded as an exception and not a pass. Its held-out
