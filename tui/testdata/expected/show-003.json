@@ -1,0 +1,104 @@
+{
+ "adapter": {
+  "gguf": false,
+  "path": "tui/testdata/fixture/posttool-fixture-003/adapter.xml",
+  "present": false,
+  "sha256": null
+ },
+ "adoption": null,
+ "counted": true,
+ "gate_table": [],
+ "gates": [],
+ "hypothesis": null,
+ "id": "posttool-fixture-003",
+ "kind": "run",
+ "last": {
+  "entropy": 0.56,
+  "kl": 0.005,
+  "mean_reward": 0.72,
+  "step": 2
+ },
+ "model_sha256": "2126a5e8",
+ "predeclared_at": null,
+ "protocol": "posttool-loop-iteration-speed.md",
+ "recipe": null,
+ "revision": "0123abcd",
+ "schema": "daycare.tui.v1",
+ "state": "in_progress",
+ "stopped": null,
+ "updates": [
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.55,
+   "finished_length": 606.6666666666666,
+   "kl": 0.004,
+   "mean_reward": 0.7,
+   "skipped": false,
+   "step": 1
+  },
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.56,
+   "finished_length": 616.6666666666666,
+   "kl": 0.005,
+   "mean_reward": 0.72,
+   "skipped": false,
+   "step": 2
+  }
+ ],
+ "updates_done": 2,
+ "updates_planned": 20,
+ "verdict": "none",
+ "verify": null,
+ "window": {
+  "base": 3,
+  "enabled": true,
+  "readings": [
+   {
+    "base": 0.0045000000000000005,
+    "crossed": false,
+    "limit": 0.025,
+    "metric": "kl",
+    "now": 0.0045000000000000005,
+    "side": ">"
+   },
+   {
+    "base": 0.555,
+    "crossed": false,
+    "limit": 0.47175,
+    "metric": "entropy",
+    "now": 0.555,
+    "side": "<"
+   },
+   {
+    "base": 611.6666666666666,
+    "crossed": false,
+    "limit": 917.5,
+    "metric": "finished_length",
+    "now": 611.6666666666666,
+    "side": ">"
+   },
+   {
+    "base": 0.0,
+    "crossed": false,
+    "limit": 0.05,
+    "metric": "capped_turn_rate",
+    "now": 0.0,
+    "side": ">"
+   },
+   {
+    "base": 0.71,
+    "crossed": false,
+    "limit": 0.51,
+    "metric": "mean_reward",
+    "now": 0.71,
+    "side": "<"
+   }
+  ],
+  "ready": false,
+  "rows": 2,
+  "source": "run record",
+  "tripped": null,
+  "window": 3
+ }
+}

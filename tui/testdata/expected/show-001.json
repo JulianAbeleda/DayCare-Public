@@ -1,0 +1,343 @@
+{
+ "adapter": {
+  "gguf": false,
+  "path": "tui/testdata/fixture/posttool-fixture-001/adapter.xml",
+  "present": false,
+  "sha256": "aaaaaaaaaaaaaaaa"
+ },
+ "adoption": null,
+ "counted": true,
+ "gate_table": [
+  {
+   "id": "G1",
+   "measured": {
+    "diff": 15.5,
+    "hi": 20.0,
+    "lo": 11.2,
+    "note": "",
+    "passed": true,
+    "scored_at": "2026-10-08T00:00:00+0000"
+   },
+   "name": "word-problem repair",
+   "prediction": ">= +10 points (run 5: +15.5 [+11.2, +20.0])",
+   "result": "pass",
+   "rule": "lower_gt",
+   "rule_text": "CI lower bound > value",
+   "value": 0.0
+  },
+  {
+   "id": "G1b",
+   "measured": {
+    "diff": 0.8,
+    "hi": 2.1,
+    "lo": -0.6,
+    "note": "",
+    "passed": true,
+    "scored_at": "2026-10-08T00:00:00+0000"
+   },
+   "name": "relay",
+   "prediction": "no clear drop (run 5: +0.8 [-0.6, +2.1])",
+   "result": "pass",
+   "rule": "upper_ge",
+   "rule_text": "CI upper bound >= value",
+   "value": 0.0
+  },
+  {
+   "id": "G2a",
+   "measured": null,
+   "name": "relay-family blanks",
+   "prediction": "fewer blanks (run 5: -3.1 [-4.1, -2.1])",
+   "result": "open",
+   "rule": "upper_lt",
+   "rule_text": "CI upper bound < value",
+   "value": 0.0
+  },
+  {
+   "id": "G2b",
+   "measured": null,
+   "name": "relay-family wrong answers",
+   "prediction": "not up (run 5: -2.9 [-4.5, -1.3])",
+   "result": "open",
+   "rule": "upper_le",
+   "rule_text": "CI upper bound <= value",
+   "value": 2.5
+  },
+  {
+   "id": "G5L",
+   "measured": null,
+   "name": "long-number relay/repair",
+   "prediction": "no worse (run 5: +10.8 [+4.2, +18.6])",
+   "result": "open",
+   "rule": "lower_ge",
+   "rule_text": "CI lower bound >= value",
+   "value": -8.0
+  },
+  {
+   "id": "G5B",
+   "measured": null,
+   "name": "blocked, rule (c)",
+   "prediction": "no worse, expected better (run 5: +12.3 [+7.7, +16.9])",
+   "result": "open",
+   "rule": "lower_ge",
+   "rule_text": "CI lower bound >= value",
+   "value": -8.0
+  },
+  {
+   "id": "G6",
+   "measured": null,
+   "name": "blocked, OOD selection probe",
+   "prediction": "no worse (run 5: +10.6 [+5.6, +15.4])",
+   "result": "open",
+   "rule": "lower_ge",
+   "rule_text": "CI lower bound >= value",
+   "value": -9.0
+  },
+  {
+   "id": "G7",
+   "measured": null,
+   "name": "numeric retention, T=1",
+   "prediction": "holds (run 5 at T=1: level with stock)",
+   "result": "open",
+   "rule": "lower_ge",
+   "rule_text": "CI lower bound >= value",
+   "value": -5.0
+  },
+  {
+   "id": "G3",
+   "measured": {
+    "diff": 1.0,
+    "hi": null,
+    "lo": null,
+    "note": "",
+    "passed": false,
+    "scored_at": "2026-10-08T00:00:00+0000"
+   },
+   "name": "plain retention losses, T=0",
+   "prediction": "zero plain-answer losses",
+   "result": "fail",
+   "rule": "count_le",
+   "rule_text": "count <= value",
+   "value": 0.0
+  }
+ ],
+ "gates": [
+  {
+   "id": "G1",
+   "result": "pass"
+  },
+  {
+   "id": "G1b",
+   "result": "pass"
+  },
+  {
+   "id": "G2a",
+   "result": "open"
+  },
+  {
+   "id": "G2b",
+   "result": "open"
+  },
+  {
+   "id": "G5L",
+   "result": "open"
+  },
+  {
+   "id": "G5B",
+   "result": "open"
+  },
+  {
+   "id": "G6",
+   "result": "open"
+  },
+  {
+   "id": "G7",
+   "result": "open"
+  },
+  {
+   "id": "G3",
+   "result": "fail"
+  }
+ ],
+ "hypothesis": "From stock, the run-5 recipe lifts held-out repair without more blanks, keeps blocked behaviour and retention no worse than stock, and trips no stop trigger.",
+ "id": "posttool-fixture-001",
+ "kind": "run",
+ "last": {
+  "entropy": 0.4,
+  "kl": 0.008,
+  "mean_reward": 0.86,
+  "step": 6
+ },
+ "model_sha256": "2126a5e8",
+ "predeclared_at": "2026-10-08T00:00:00+0000",
+ "protocol": "rloo-posttool-fixture-001.md",
+ "recipe": [
+  "--categories",
+  "repair",
+  "relay",
+  "blocked",
+  "--mix",
+  "repair=0.75,relay=0.15,blocked=0.1",
+  "--mask",
+  "none",
+  "--reward",
+  "graded",
+  "--wrong",
+  "-1",
+  "--blank",
+  "-1.5",
+  "--abstain",
+  "relay=-0.5,repair=0,miss=0,empty=0,blocked=0",
+  "--length-weight",
+  "1.0",
+  "--repetition",
+  "n=40,penalty=-0.05",
+  "--kl-aggregation",
+  "matched",
+  "--kl-beta",
+  "0.03",
+  "--lanes",
+  "32",
+  "--prompts-per-update",
+  "4",
+  "--compact",
+  "8,16",
+  "--keep-every",
+  "10",
+  "--updates",
+  "102",
+  "--states",
+  "states.xml",
+  "--envelope",
+  "envelope.xml",
+  "--protocol",
+  "rloo-posttool-fixture-001.md"
+ ],
+ "revision": "0123abcd",
+ "schema": "daycare.tui.v1",
+ "state": "stopped",
+ "stopped": {
+  "reason": "entropy 0.44 < 0.4675 (mean of the last 3 stepped updates)",
+  "update": 6
+ },
+ "updates": [
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.55,
+   "finished_length": 606.6666666666666,
+   "kl": 0.004,
+   "mean_reward": 0.7,
+   "skipped": false,
+   "step": 1
+  },
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.56,
+   "finished_length": 616.6666666666666,
+   "kl": 0.005,
+   "mean_reward": 0.72,
+   "skipped": false,
+   "step": 2
+  },
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.54,
+   "finished_length": 611.6666666666666,
+   "kl": 0.005,
+   "mean_reward": 0.74,
+   "skipped": false,
+   "step": 3
+  },
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.5,
+   "finished_length": 626.6666666666666,
+   "kl": 0.006,
+   "mean_reward": 0.8,
+   "skipped": false,
+   "step": 4
+  },
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.42,
+   "finished_length": 646.6666666666666,
+   "kl": 0.007,
+   "mean_reward": 0.84,
+   "skipped": false,
+   "step": 5
+  },
+  {
+   "capped_turn_rate": 0.0,
+   "entropy": 0.4,
+   "finished_length": 656.6666666666666,
+   "kl": 0.008,
+   "mean_reward": 0.86,
+   "skipped": false,
+   "step": 6
+  }
+ ],
+ "updates_done": 6,
+ "updates_planned": 102,
+ "verdict": "fail",
+ "verify": {
+  "bit_exact": true,
+  "exact_values": 4194304,
+  "max_abs_error": 0.0,
+  "rows": 32,
+  "values": 4194304,
+  "vocab": 131072
+ },
+ "window": {
+  "base": 3,
+  "enabled": true,
+  "readings": [
+   {
+    "base": 0.004666666666666667,
+    "crossed": false,
+    "limit": 0.025,
+    "metric": "kl",
+    "now": 0.007,
+    "side": ">"
+   },
+   {
+    "base": 0.55,
+    "crossed": true,
+    "limit": 0.4675,
+    "metric": "entropy",
+    "now": 0.44,
+    "side": "<"
+   },
+   {
+    "base": 611.6666666666666,
+    "crossed": false,
+    "limit": 917.5,
+    "metric": "finished_length",
+    "now": 643.3333333333334,
+    "side": ">"
+   },
+   {
+    "base": 0.0,
+    "crossed": false,
+    "limit": 0.05,
+    "metric": "capped_turn_rate",
+    "now": 0.0,
+    "side": ">"
+   },
+   {
+    "base": 0.7200000000000001,
+    "crossed": false,
+    "limit": 0.52,
+    "metric": "mean_reward",
+    "now": 0.8333333333333334,
+    "side": "<"
+   }
+  ],
+  "ready": true,
+  "rows": 6,
+  "source": "update records",
+  "tripped": {
+   "reason": "entropy 0.44 < 0.4675 (mean of the last 3 stepped updates)",
+   "update": 6
+  },
+  "window": 3
+ }
+}

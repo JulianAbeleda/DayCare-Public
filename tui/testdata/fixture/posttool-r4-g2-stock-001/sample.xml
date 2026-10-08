@@ -1,0 +1,5 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sample schema="daycare.record.v1" type="dict">
+  <field name="arm" type="str">stock</field>
+  <field name="k" type="int">20</field>
+</sample>

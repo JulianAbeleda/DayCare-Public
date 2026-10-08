@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='utf-8'?>
+<progress schema="daycare.record.v1" type="dict">
+  <field name="schema" type="str">daycare.rloo_tinygrad.v1</field>
+  <field name="episode_source" type="str">posttool</field>
+  <field name="complete" type="bool">false</field>
+  <field name="daycare_revision" type="str">0123abcd</field>
+  <field name="runner_sha256" type="str">rrrrrrrr</field>
+  <field name="model_sha256" type="str">2126a5e8</field>
+  <field name="envelope_sha256" type="str">eeeeeeee</field>
+  <field name="states_sha256" type="str">ssssssss</field>
+  <field name="tinygrad" type="str">tinygrad-arkey</field>
+  <field name="tinygrad_revision" type="str">bbf307f8</field>
+  <field name="model_profile" type="dict">
+    <field name="architecture" type="str">nemotron_h</field>
+    <field name="precision" type="str">bf16</field>
+  </field>
+  <field name="rank" type="int">4</field>
+  <field name="alpha" type="float">8.0</field>
+  <field name="last_k" type="int">1</field>
+  <field name="target_map" type="list">
+    <item type="str">blk.*.attn_q</item>
+  </field>
+  <field name="lr" type="float">0.0002</field>
+  <field name="seed" type="int">20261001</field>
+  <field name="examples" type="int">427</field>
+  <field name="shared_prefix" type="int">1024</field>
+  <field name="training_objective" type="str">rloo-tinygrad-posttool</field>
+  <field name="config" type="dict">
+    <field name="updates" type="int">20</field>
+    <field name="prompts_per_update" type="int">4</field>
+    <field name="group" type="int">8</field>
+    <field name="lanes" type="int">32</field>
+    <field name="protocol" type="str">posttool-loop-iteration-speed.md</field>
+    <field name="triggers" type="dict">
+      <field name="window" type="int">3</field>
+      <field name="base" type="int">3</field>
+      <field name="entropy_composition" type="int">0</field>
+    </field>
+    <field name="kl_beta" type="float">0.03</field>
+    <field name="kl_aggregation" type="str">matched</field>
+  </field>
+  <field name="counted" type="bool">true</field>
+  <field name="load_s" type="float">5.1</field>
+  <field name="setup_s" type="float">2.0</field>
+  <field name="losses" type="list">
+    <item type="dict">
+      <field name="step" type="int">1</field>
+      <field name="loss" type="float">0.01</field>
+      <field name="mean_reward" type="float">0.7</field>
+      <field name="mixed_groups" type="int">1</field>
+      <field name="total_s" type="float">36.7</field>
+      <field name="kl" type="float">0.004</field>
+      <field name="entropy" type="float">0.55</field>
+      <field name="max_logprob_error" type="float">0.0004</field>
+      <field name="adapter_step_rms" type="float">2e-05</field>
+      <field name="capped_turn_rate" type="float">0.0</field>
+      <field name="advantage_length_sum" type="float">-80.0</field>
+      <field name="stepped" type="bool">true</field>
+      <field name="skipped" type="bool">false</field>
+      <field name="generated_tokens" type="int">1800</field>
+      <field name="finished_length" type="float">606.6666666666666</field>
+    </item>
+    <item type="dict">
+      <field name="step" type="int">2</field>
+      <field name="loss" type="float">0.02</field>
+      <field name="mean_reward" type="float">0.72</field>
+      <field name="mixed_groups" type="int">1</field>
+      <field name="total_s" type="float">36.7</field>
+      <field name="kl" type="float">0.005</field>
+      <field name="entropy" type="float">0.56</field>
+      <field name="max_logprob_error" type="float">0.0004</field>
+      <field name="adapter_step_rms" type="float">2e-05</field>
+      <field name="capped_turn_rate" type="float">0.0</field>
+      <field name="advantage_length_sum" type="float">-80.0</field>
+      <field name="stepped" type="bool">true</field>
+      <field name="skipped" type="bool">false</field>
+      <field name="generated_tokens" type="int">1830</field>
+      <field name="finished_length" type="float">616.6666666666666</field>
+    </item>
+  </field>
+  <field name="skipped_updates" type="int">0</field>
+</progress>

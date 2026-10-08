@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='utf-8'?>
+<update schema="daycare.record.v1" type="dict">
+  <field name="metrics" type="dict">
+    <field name="loss" type="float">0.06</field>
+    <field name="kl" type="float">0.008</field>
+    <field name="entropy" type="float">0.4</field>
+    <field name="max_logprob_error" type="float">0.0004</field>
+    <field name="adapter_step_rms" type="float">2e-05</field>
+    <field name="capped_turn_rate" type="float">0.0</field>
+    <field name="advantage_length_sum" type="float">-80.0</field>
+    <field name="stepped" type="bool">true</field>
+    <field name="skipped" type="bool">false</field>
+    <field name="generated_tokens" type="int">1950</field>
+  </field>
+  <field name="groups" type="list">
+    <item type="dict">
+      <field name="rewards" type="list">
+        <item type="float">1.0</item>
+        <item type="float">-1.0</item>
+        <item type="float">1.0</item>
+      </field>
+      <field name="reasons" type="list">
+        <item type="str">correct</item>
+        <item type="str">wrong</item>
+        <item type="str">correct</item>
+      </field>
+      <field name="tokens" type="list">
+        <item type="int">650</item>
+        <item type="int">690</item>
+        <item type="int">630</item>
+      </field>
+      <field name="stops" type="list">
+        <item type="str">eos</item>
+        <item type="str">eos</item>
+        <item type="str">eos</item>
+      </field>
+      <field name="task" type="str">repair:t3-006</field>
+    </item>
+  </field>
+  <field name="episodes" type="list">
+    <item type="list">
+      <item type="dict">
+        <field name="tokens" type="list">
+          <item type="int">650</item>
+        </field>
+        <field name="stops" type="list">
+          <item type="str">eos</item>
+        </field>
+        <field name="reward" type="float">1.0</field>
+        <field name="reason" type="str">correct</field>
+        <field name="final" type="str">&lt;answer&gt;3&lt;/answer&gt;</field>
+        <field name="final_call" type="bool">false</field>
+        <field name="state" type="str">repair:t3-006</field>
+      </item>
+      <item type="dict">
+        <field name="tokens" type="list">
+          <item type="int">690</item>
+        </field>
+        <field name="stops" type="list">
+          <item type="str">eos</item>
+        </field>
+        <field name="reward" type="float">-1.0</field>
+        <field name="reason" type="str">wrong</field>
+        <field name="final" type="str">&lt;answer&gt;3&lt;/answer&gt;</field>
+        <field name="final_call" type="bool">false</field>
+        <field name="state" type="str">repair:t3-006</field>
+      </item>
+      <item type="dict">
+        <field name="tokens" type="list">
+          <item type="int">630</item>
+        </field>
+        <field name="stops" type="list">
+          <item type="str">eos</item>
+        </field>
+        <field name="reward" type="float">1.0</field>
+        <field name="reason" type="str">correct</field>
+        <field name="final" type="str">&lt;answer&gt;3&lt;/answer&gt;</field>
+        <field name="final_call" type="bool">false</field>
+        <field name="state" type="str">repair:t3-006</field>
+      </item>
+    </item>
+  </field>
+  <field name="times" type="dict">
+    <field name="total_s" type="float">36.7</field>
+  </field>
+  <field name="mean_reward" type="float">0.86</field>
+  <field name="mixed_groups" type="int">1</field>
+</update>

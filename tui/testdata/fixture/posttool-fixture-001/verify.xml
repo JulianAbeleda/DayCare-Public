@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<verify schema="daycare.record.v1" type="dict">
+  <field name="rows" type="int">32</field>
+  <field name="vocab" type="int">131072</field>
+  <field name="bit_exact" type="bool">true</field>
+  <field name="max_abs_error" type="float">0.0</field>
+  <field name="exact_values" type="int">4194304</field>
+  <field name="values" type="int">4194304</field>
+</verify>

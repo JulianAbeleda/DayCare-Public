@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='utf-8'?>
+<predeclaration schema="daycare.record.v1" type="dict">
+  <field name="schema" type="str">daycare.predeclaration.v1</field>
+  <field name="protocol" type="str">rloo-posttool-fixture-002.md</field>
+  <field name="template" type="str">run5</field>
+  <field name="hypothesis" type="str">From stock, the run-5 recipe lifts held-out repair without more blanks, keeps blocked behaviour and retention no worse than stock, and trips no stop trigger.</field>
+  <field name="recipe" type="list">
+    <item type="str">--categories</item>
+    <item type="str">repair</item>
+    <item type="str">relay</item>
+    <item type="str">blocked</item>
+    <item type="str">--mix</item>
+    <item type="str">repair=0.75,relay=0.15,blocked=0.1</item>
+    <item type="str">--mask</item>
+    <item type="str">none</item>
+    <item type="str">--reward</item>
+    <item type="str">graded</item>
+    <item type="str">--wrong</item>
+    <item type="str">-1</item>
+    <item type="str">--blank</item>
+    <item type="str">-1.5</item>
+    <item type="str">--abstain</item>
+    <item type="str">relay=-0.5,repair=0,miss=0,empty=0,blocked=0</item>
+    <item type="str">--length-weight</item>
+    <item type="str">1.0</item>
+    <item type="str">--repetition</item>
+    <item type="str">n=40,penalty=-0.05</item>
+    <item type="str">--kl-aggregation</item>
+    <item type="str">matched</item>
+    <item type="str">--kl-beta</item>
+    <item type="str">0.03</item>
+    <item type="str">--lanes</item>
+    <item type="str">32</item>
+    <item type="str">--prompts-per-update</item>
+    <item type="str">4</item>
+    <item type="str">--compact</item>
+    <item type="str">8,16</item>
+    <item type="str">--keep-every</item>
+    <item type="str">10</item>
+    <item type="str">--updates</item>
+    <item type="str">102</item>
+    <item type="str">--states</item>
+    <item type="str">states.xml</item>
+    <item type="str">--envelope</item>
+    <item type="str">envelope.xml</item>
+    <item type="str">--protocol</item>
+    <item type="str">rloo-posttool-fixture-002.md</item>
+  </field>
+  <field name="gates" type="list">
+    <item type="dict">
+      <field name="id" type="str">G1</field>
+      <field name="name" type="str">word-problem repair</field>
+      <field name="rule" type="str">lower_gt</field>
+      <field name="value" type="float">0.0</field>
+      <field name="prediction" type="str">&gt;= +10 points (run 5: +15.5 [+11.2, +20.0])</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G1b</field>
+      <field name="name" type="str">relay</field>
+      <field name="rule" type="str">upper_ge</field>
+      <field name="value" type="float">0.0</field>
+      <field name="prediction" type="str">no clear drop (run 5: +0.8 [-0.6, +2.1])</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G2a</field>
+      <field name="name" type="str">relay-family blanks</field>
+      <field name="rule" type="str">upper_lt</field>
+      <field name="value" type="float">0.0</field>
+      <field name="prediction" type="str">fewer blanks (run 5: -3.1 [-4.1, -2.1])</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G2b</field>
+      <field name="name" type="str">relay-family wrong answers</field>
+      <field name="rule" type="str">upper_le</field>
+      <field name="value" type="float">2.5</field>
+      <field name="prediction" type="str">not up (run 5: -2.9 [-4.5, -1.3])</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G5L</field>
+      <field name="name" type="str">long-number relay/repair</field>
+      <field name="rule" type="str">lower_ge</field>
+      <field name="value" type="float">-8.0</field>
+      <field name="prediction" type="str">no worse (run 5: +10.8 [+4.2, +18.6])</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G5B</field>
+      <field name="name" type="str">blocked, rule (c)</field>
+      <field name="rule" type="str">lower_ge</field>
+      <field name="value" type="float">-8.0</field>
+      <field name="prediction" type="str">no worse, expected better (run 5: +12.3 [+7.7, +16.9])</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G6</field>
+      <field name="name" type="str">blocked, OOD selection probe</field>
+      <field name="rule" type="str">lower_ge</field>
+      <field name="value" type="float">-9.0</field>
+      <field name="prediction" type="str">no worse (run 5: +10.6 [+5.6, +15.4])</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G7</field>
+      <field name="name" type="str">numeric retention, T=1</field>
+      <field name="rule" type="str">lower_ge</field>
+      <field name="value" type="float">-5.0</field>
+      <field name="prediction" type="str">holds (run 5 at T=1: level with stock)</field>
+      <field name="result" type="null" />
+    </item>
+    <item type="dict">
+      <field name="id" type="str">G3</field>
+      <field name="name" type="str">plain retention losses, T=0</field>
+      <field name="rule" type="str">count_le</field>
+      <field name="value" type="float">0.0</field>
+      <field name="prediction" type="str">zero plain-answer losses</field>
+      <field name="result" type="null" />
+    </item>
+  </field>
+  <field name="predeclared_at" type="str">2026-10-08T00:00:00+0000</field>
+  <field name="adoption" type="null" />
+</predeclaration>

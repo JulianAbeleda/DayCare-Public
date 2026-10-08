@@ -1,0 +1,153 @@
+{
+ "kind": "runs",
+ "root": "tui/testdata/fixture",
+ "runs": [
+  {
+   "adapter": {
+    "gguf": false,
+    "path": "tui/testdata/fixture/posttool-fixture-001/adapter.xml",
+    "present": false,
+    "sha256": "aaaaaaaaaaaaaaaa"
+   },
+   "counted": true,
+   "gates": [
+    {
+     "id": "G1",
+     "result": "pass"
+    },
+    {
+     "id": "G1b",
+     "result": "pass"
+    },
+    {
+     "id": "G2a",
+     "result": "open"
+    },
+    {
+     "id": "G2b",
+     "result": "open"
+    },
+    {
+     "id": "G5L",
+     "result": "open"
+    },
+    {
+     "id": "G5B",
+     "result": "open"
+    },
+    {
+     "id": "G6",
+     "result": "open"
+    },
+    {
+     "id": "G7",
+     "result": "open"
+    },
+    {
+     "id": "G3",
+     "result": "fail"
+    }
+   ],
+   "id": "posttool-fixture-001",
+   "last": {
+    "entropy": 0.4,
+    "kl": 0.008,
+    "mean_reward": 0.86,
+    "step": 6
+   },
+   "protocol": "rloo-posttool-fixture-001.md",
+   "state": "stopped",
+   "stopped": {
+    "reason": "entropy 0.44 < 0.4675 (mean of the last 3 stepped updates)",
+    "update": 6
+   },
+   "updates_done": 6,
+   "updates_planned": 102,
+   "verdict": "fail"
+  },
+  {
+   "adapter": {
+    "gguf": false,
+    "path": "tui/testdata/fixture/posttool-fixture-002/adapter.xml",
+    "present": false,
+    "sha256": null
+   },
+   "counted": null,
+   "gates": [
+    {
+     "id": "G1",
+     "result": "open"
+    },
+    {
+     "id": "G1b",
+     "result": "open"
+    },
+    {
+     "id": "G2a",
+     "result": "open"
+    },
+    {
+     "id": "G2b",
+     "result": "open"
+    },
+    {
+     "id": "G5L",
+     "result": "open"
+    },
+    {
+     "id": "G5B",
+     "result": "open"
+    },
+    {
+     "id": "G6",
+     "result": "open"
+    },
+    {
+     "id": "G7",
+     "result": "open"
+    },
+    {
+     "id": "G3",
+     "result": "open"
+    }
+   ],
+   "id": "posttool-fixture-002",
+   "last": {
+    "entropy": null,
+    "kl": null,
+    "mean_reward": null,
+    "step": null
+   },
+   "protocol": "rloo-posttool-fixture-002.md",
+   "state": "predeclared",
+   "stopped": null,
+   "updates_done": 0,
+   "updates_planned": null,
+   "verdict": "open"
+  },
+  {
+   "adapter": {
+    "gguf": false,
+    "path": "tui/testdata/fixture/posttool-fixture-003/adapter.xml",
+    "present": false,
+    "sha256": null
+   },
+   "counted": true,
+   "gates": [],
+   "id": "posttool-fixture-003",
+   "last": {
+    "entropy": 0.56,
+    "kl": 0.005,
+    "mean_reward": 0.72,
+    "step": 2
+   },
+   "protocol": "posttool-loop-iteration-speed.md",
+   "state": "in_progress",
+   "stopped": null,
+   "updates_done": 2,
+   "updates_planned": 20,
+   "verdict": "none"
+  }
+ ],
+ "schema": "daycare.tui.v1"
+}

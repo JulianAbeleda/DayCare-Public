@@ -1,0 +1,23 @@
+♡ DayCare Setup  Runs  Adapters  Job   (•́︿•̀)  plain
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ posttool-fixture-001                                                         │
+│ ⚠ stopped by a trigger at update 6   █░░░░░░░░░ 6/102   verdict fail         │
+│ record research/rloo-posttool-fixture-001.md                                 │
+│ ⚠ stopped: entropy 0.44 < 0.4675 (mean of the last 3 stepped updates)        │
+│ hypothesis From stock, the run-5 recipe lifts held-out repair without more … │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ Gates: predicted vs measured                                                 │
+│    ID   GATE                          MEASURED              RULE           … │
+│ ✓  G1   word-problem repair           +15.5 [+11.2, +20.0]  CI lower bound … │
+│ ✓  G1b  relay                         +0.8 [-0.6, +2.1]     CI upper bound … │
+│ ○  G2a  relay-family blanks                                 CI upper bound … │
+│ ○  G2b  relay-family wrong answers                          CI upper bound … │
+│ ○  G5L  long-number relay/repair                            CI lower bound … │
+│ ○  G5B  blocked, rule (c)                                   CI lower bound … │
+│ ○  G6   blocked, OOD selection probe                        CI lower bound … │
+│ ○  G7   numeric retention, T=1                              CI lower bound … │
+│ ✗  G3   plain retention losses, T=0   count 1               count <= 0     … │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Keys below. Press t for the technical words.                                    
+1-4 screens • j/k move • enter open • s start • x stop • g generate …
