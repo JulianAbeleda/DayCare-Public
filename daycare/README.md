@@ -16,8 +16,8 @@ daycare/
     evaluate.py      target gate AND forgetting probe, against any GGUF
     fixtures.py      deterministic inputs for tests
     trainer_env.py   import the training tinygrad, not the serving one
-  train/
-    optimizer.py     lr/decay update rule over a small trainable adapter
+  subject/
+    fastweights.py   the fast-weight lobe: per-turn, reward-gated, decaying adapter change
   harness/       measurement, not training
     verdict.py       the six-outcome vocabulary; only PASS_PROMOTE ships
     campaign.py      many attempts across one knob, never pooled
