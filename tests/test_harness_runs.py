@@ -143,3 +143,44 @@ def test_setup_checks_files_not_words(tmp_path):
     assert not by['tasks']['ok'] and by['tasks']['generate'] == 'tasks'
     assert by['predeclaration']['ok'] and by['predeclaration']['detail'] == 'posttool-fixture-002'
     assert got['ready'] is False
+
+
+def _fake_smi(tmp_path, free_mib, total_mib, apps=''):
+    bin_dir = tmp_path / 'bin'
+    bin_dir.mkdir()
+    smi = bin_dir / 'nvidia-smi'
+    smi.write_text('#!/bin/sh\ncase "$1" in\n'
+                   f'  --query-gpu*) echo "Test GPU, {free_mib}, {total_mib}";;\n'
+                   f'  *) printf "{apps}";;\nesac\n')
+    smi.chmod(0o755)
+    return str(bin_dir)
+
+
+def test_gpu_check_without_nvidia_says_so(monkeypatch):
+    monkeypatch.setattr(runs.shutil, 'which', lambda name: None)
+    got = runs.gpu_check()
+    assert not got['ok'] and 'no NVIDIA GPU' in got['detail'] and '32 GB' in got['fix']
+
+
+def test_gpu_check_names_what_holds_the_memory(tmp_path, monkeypatch):
+    monkeypatch.setenv('PATH', _fake_smi(tmp_path, 3891, 32607, '2976, /opt/llama-server, 28220\\n'))
+    got = runs.gpu_check()
+    assert not got['ok'] and got['detail'] == 'Test GPU: 3.8 GB free of 31.8 GB'
+    assert got['fix'] == 'free the GPU: llama-server (pid 2976) holds 27.6 GB'
+
+
+def test_gpu_check_passes_with_room_and_refuses_a_small_card(tmp_path, monkeypatch):
+    monkeypatch.setenv('PATH', _fake_smi(tmp_path, 31000, 32607))
+    assert runs.gpu_check()['ok']
+    monkeypatch.setenv('DAYCARE_TRAIN_GPU_GB', '40')
+    assert 'train on a card with at least 40 GB' in runs.gpu_check()['fix']
+
+
+def test_one_unreadable_run_does_not_hide_the_others(tmp_path):
+    root = tmp_path / 'runs'
+    shutil.copytree(FIXTURE, root)
+    (root / 'old-record').mkdir()
+    (root / 'old-record' / 'run.xml').write_text('<record schema="old/v0"/>')
+    code, got = seam('list', '--root', str(root))
+    assert code == 0 and len(got['runs']) == 3
+    assert [u['id'] for u in got['unreadable']] == ['old-record']

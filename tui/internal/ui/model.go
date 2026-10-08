@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -279,6 +280,13 @@ func (m Model) update(msg tea.Msg) (Model, tea.Cmd) {
 		if msg.err != nil {
 			m.note = "The runs folder could not be read: " + msg.err.Error()
 			return m, nil
+		}
+		if n := len(msg.runs.Unreadable); n > 0 {
+			ids := make([]string, n)
+			for i, u := range msg.runs.Unreadable {
+				ids[i] = u.ID
+			}
+			m.note = fmt.Sprintf("⚠ %d run(s) could not be read: %s (%s)", n, strings.Join(ids, ", "), msg.runs.Unreadable[0].Error)
 		}
 		if id := m.defaultRun(); !m.runSet && id != "" && id != m.runID() {
 			return m, m.loadRun(id)

@@ -63,6 +63,13 @@ type Runs struct {
 	Kind string    `json:"kind"`
 	Root string    `json:"root"`
 	Runs []Summary `json:"runs"`
+	// Unreadable names run folders whose records Python could not read, so one old record never hides the rest.
+	Unreadable []Unreadable `json:"unreadable"`
+}
+
+type Unreadable struct {
+	ID    string `json:"id"`
+	Error string `json:"error"`
 }
 
 type Measured struct {

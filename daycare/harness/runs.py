@@ -217,12 +217,56 @@ def is_run(path: Path) -> bool:
 def list_runs(root: Path) -> dict:
     if not root.is_dir():
         raise FileNotFoundError(f'runs folder not found: {root}')
-    runs = [summary(p, load_run(p)) for p in sorted(root.iterdir()) if is_run(p)]
-    return dict(schema=SCHEMA, kind='runs', root=str(root), runs=runs)
+    runs, unreadable = [], []
+    for p in sorted(root.iterdir()):
+        if not is_run(p):
+            continue
+        try:
+            runs.append(summary(p, load_run(p)))
+        except (ValueError, KeyError, TypeError, OSError) as error:  # one old record must not hide the others
+            unreadable.append(dict(id=p.name, error=f'{type(error).__name__}: {error}'))
+    return dict(schema=SCHEMA, kind='runs', root=str(root), runs=runs, unreadable=unreadable)
 
 
 def _check(id: str, label: str, ok: bool, detail: str, fix: str = '', generate: str | None = None) -> dict:
     return dict(id=id, label=label, ok=bool(ok), detail=detail, fix=fix, generate=generate)
+
+
+def gpu_check() -> dict:
+    """Training needs one NVIDIA GPU with room for the run. Run 5 trained on one 32 GB card (docs/rl-training.md);
+    the free-memory floor below is that fact, not a measured peak. DAYCARE_TRAIN_GPU_GB overrides it."""
+    need = float(os.environ.get('DAYCARE_TRAIN_GPU_GB', '30'))
+    label = f'an NVIDIA GPU with {need:g} GB free for training'
+    smi = shutil.which('nvidia-smi')
+    if smi is None:
+        return _check('gpu', label, False, 'no NVIDIA GPU on this machine (nvidia-smi not found)',
+                      'train on a machine with one 32 GB NVIDIA GPU (docs/rl-training.md)')
+    try:
+        gpus = subprocess.run([smi, '--query-gpu=name,memory.free,memory.total', '--format=csv,noheader,nounits'],
+                              capture_output=True, text=True, check=True, timeout=10).stdout.strip().splitlines()
+        apps = subprocess.run([smi, '--query-compute-apps=pid,process_name,used_memory', '--format=csv,noheader,nounits'],
+                              capture_output=True, text=True, check=True, timeout=10).stdout.strip().splitlines()
+        name, free, total = (part.strip() for part in gpus[0].split(','))
+        free_gb, total_gb = int(free) / 1024, int(total) / 1024
+    except (OSError, subprocess.SubprocessError, ValueError, IndexError) as error:
+        return _check('gpu', label, False, f'nvidia-smi could not be read: {error}', 'check the NVIDIA driver')
+    detail = f'{name}: {free_gb:.1f} GB free of {total_gb:.1f} GB'
+    if free_gb >= need:
+        return _check('gpu', label, True, detail)
+    holders = []
+    for row in apps:
+        try:
+            pid, proc, used = (part.strip() for part in row.split(','))
+            holders.append(f'{Path(proc).name} (pid {pid}) holds {int(used) / 1024:.1f} GB')
+        except ValueError:
+            continue
+    if total_gb < need:
+        fix = f'this card has {total_gb:.1f} GB; train on a card with at least {need:g} GB'
+    elif holders:
+        fix = 'free the GPU: ' + '; '.join(holders)
+    else:
+        fix = f'free {need - free_gb:.1f} GB of GPU memory'
+    return _check('gpu', label, False, detail, fix)
 
 
 def setup(root: Path, repo: Path) -> dict:
@@ -241,6 +285,7 @@ def setup(root: Path, repo: Path) -> dict:
         except Exception as error:  # noqa: BLE001 -- the detail is the point
             checks.append(_check(module, f'{module} importable', False, f'{type(error).__name__}: {error}',
                                  'check out the branch that carries the RL loop (docs/rl-training.md)'))
+    checks.append(gpu_check())
     trainer = os.environ.get('DAYCARE_TRAIN_TINYGRAD_PATH', '')
     checks.append(_check('trainer', 'DAYCARE_TRAIN_TINYGRAD_PATH is a tinygrad-arkey checkout',
                          bool(trainer) and (Path(trainer) / 'extra').is_dir(), trainer or 'unset',
