@@ -232,41 +232,85 @@ def _check(id: str, label: str, ok: bool, detail: str, fix: str = '', generate: 
     return dict(id=id, label=label, ok=bool(ok), detail=detail, fix=fix, generate=generate)
 
 
-def gpu_check() -> dict:
-    """Training needs one NVIDIA GPU with room for the run. Run 5 trained on one 32 GB card (docs/rl-training.md);
-    the free-memory floor below is that fact, not a measured peak. DAYCARE_TRAIN_GPU_GB overrides it."""
-    need = float(os.environ.get('DAYCARE_TRAIN_GPU_GB', '30'))
-    label = f'an NVIDIA GPU with {need:g} GB free for training'
-    smi = shutil.which('nvidia-smi')
-    if smi is None:
-        return _check('gpu', label, False, 'no NVIDIA GPU on this machine (nvidia-smi not found)',
-                      'train on a machine with one 32 GB NVIDIA GPU (docs/rl-training.md)')
-    try:
-        gpus = subprocess.run([smi, '--query-gpu=name,memory.free,memory.total', '--format=csv,noheader,nounits'],
-                              capture_output=True, text=True, check=True, timeout=10).stdout.strip().splitlines()
-        apps = subprocess.run([smi, '--query-compute-apps=pid,process_name,used_memory', '--format=csv,noheader,nounits'],
-                              capture_output=True, text=True, check=True, timeout=10).stdout.strip().splitlines()
-        name, free, total = (part.strip() for part in gpus[0].split(','))
-        free_gb, total_gb = int(free) / 1024, int(total) / 1024
-    except (OSError, subprocess.SubprocessError, ValueError, IndexError) as error:
-        return _check('gpu', label, False, f'nvidia-smi could not be read: {error}', 'check the NVIDIA driver')
-    detail = f'{name}: {free_gb:.1f} GB free of {total_gb:.1f} GB'
-    if free_gb >= need:
-        return _check('gpu', label, True, detail)
+def _metal_memory() -> dict:
+    """Apple GPUs share system memory; Metal's recommended working set is what the GPU may use."""
+    import ctypes
+    import ctypes.util
+    objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library('objc'))
+    metal = ctypes.cdll.LoadLibrary('/System/Library/Frameworks/Metal.framework/Metal')
+    ctypes.cdll.LoadLibrary('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics')  # links the default device
+    metal.MTLCreateSystemDefaultDevice.restype = ctypes.c_void_p
+    objc.sel_registerName.restype = ctypes.c_void_p
+    device = metal.MTLCreateSystemDefaultDevice()
+    if not device:
+        raise OSError('Metal has no default device')
+
+    def send(obj, selector, restype):
+        call = ctypes.CFUNCTYPE(restype, ctypes.c_void_p, ctypes.c_void_p)(('objc_msgSend', objc))
+        return call(obj, objc.sel_registerName(selector.encode()))
+    name = ctypes.cast(send(send(device, 'name', ctypes.c_void_p), 'UTF8String', ctypes.c_void_p), ctypes.c_char_p)
+    total = send(device, 'recommendedMaxWorkingSetSize', ctypes.c_uint64) / 2**30
+    return dict(name=name.value.decode(), total_gb=total, free_gb=total, holders=[])
+
+
+def _nvidia_memory(smi: str) -> dict:
+    query = [smi, '--format=csv,noheader,nounits']
+    gpu = subprocess.run(query[:1] + ['--query-gpu=name,memory.free,memory.total'] + query[1:], capture_output=True,
+                         text=True, check=True, timeout=10).stdout.strip().splitlines()[0]
+    apps = subprocess.run(query[:1] + ['--query-compute-apps=pid,process_name,used_memory'] + query[1:],
+                          capture_output=True, text=True, check=True, timeout=10).stdout.strip().splitlines()
+    name, free, total = (part.strip() for part in gpu.split(','))
     holders = []
     for row in apps:
-        try:
-            pid, proc, used = (part.strip() for part in row.split(','))
-            holders.append(f'{Path(proc).name} (pid {pid}) holds {int(used) / 1024:.1f} GB')
-        except ValueError:
-            continue
-    if total_gb < need:
-        fix = f'this card has {total_gb:.1f} GB; train on a card with at least {need:g} GB'
-    elif holders:
-        fix = 'free the GPU: ' + '; '.join(holders)
-    else:
-        fix = f'free {need - free_gb:.1f} GB of GPU memory'
-    return _check('gpu', label, False, detail, fix)
+        parts = [part.strip() for part in row.split(',')]
+        if len(parts) == 3 and parts[2].isdigit():
+            holders.append(f'{Path(parts[1]).name} (pid {parts[0]}) holds {int(parts[2]) / 1024:.1f} GB')
+    return dict(name=name, free_gb=int(free) / 1024, total_gb=int(total) / 1024, holders=holders)
+
+
+def _rocm_memory(smi: str) -> dict:
+    out = subprocess.run([smi, '--showmeminfo', 'vram', '--showproductname', '--json'], capture_output=True, text=True,
+                         check=True, timeout=10).stdout
+    card = next(iter(json.loads(out).values()))
+    total = int(card['VRAM Total Memory (B)']) / 2**30
+    used = int(card['VRAM Total Used Memory (B)']) / 2**30
+    return dict(name=card.get('Card series') or card.get('Card SKU') or 'AMD GPU', free_gb=total - used,
+                total_gb=total, holders=[])
+
+
+def gpu_memory() -> dict | None:
+    """This machine's first GPU and its memory, read from the GPU itself; None when no GPU answers."""
+    if smi := shutil.which('nvidia-smi'):
+        return _nvidia_memory(smi)
+    if smi := shutil.which('rocm-smi'):
+        return _rocm_memory(smi)
+    if sys.platform == 'darwin':
+        return _metal_memory()
+    return None
+
+
+def gpu_check() -> dict:
+    """Training needs a GPU with room for the run, on any backend tinygrad drives. Run 5 trained on one 32 GB card
+    (docs/rl-training.md); the floor below is that fact, not a measured peak. DAYCARE_TRAIN_GPU_GB overrides it."""
+    need = float(os.environ.get('DAYCARE_TRAIN_GPU_GB', '30'))
+    label = f'a GPU with {need:g} GB of memory free for training'
+    try:
+        gpu = gpu_memory()
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError, StopIteration) as error:
+        return _check('gpu', label, False, f'the GPU could not be read: {type(error).__name__}: {error}',
+                      'check the GPU driver')
+    if gpu is None:
+        return _check('gpu', label, False, 'no GPU found on this machine',
+                      f'train on a machine with a GPU of at least {need:g} GB')
+    detail = f"{gpu['name']}: {gpu['free_gb']:.1f} GB free of {gpu['total_gb']:.1f} GB"
+    if gpu['free_gb'] >= need:
+        return _check('gpu', label, True, detail)
+    if gpu['total_gb'] < need:
+        return _check('gpu', label, False, f"{gpu['name']}: {gpu['total_gb']:.1f} GB · too small to train (needs {need:g} GB)",
+                      f'train on a GPU with at least {need:g} GB of memory')
+    if gpu['holders']:
+        return _check('gpu', label, False, detail, 'free the GPU: ' + '; '.join(gpu['holders']))
+    return _check('gpu', label, False, detail, f"free {need - gpu['free_gb']:.1f} GB of GPU memory")
 
 
 def setup(root: Path, repo: Path) -> dict:
