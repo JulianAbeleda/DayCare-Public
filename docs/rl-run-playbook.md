@@ -3,8 +3,6 @@
 How to run a counted training experiment (RLOO/RFT/SFT) so its result can be trusted. Worked example:
 [rloo-posttool-calculator.md](../research/rloo-posttool-calculator.md). Loop: `daycare/nursery/rloo_tinygrad.py`
 (one stack: tinygrad-arkey `exp` samples and trains), post-tool episodes: `daycare/nursery/rloo_posttool.py`.
-(These training modules, `rl_triggers.py` and the tests named below are not yet in the public repository; they
-will be published with the training code.)
 
 ## 1. Predeclare (before any counted update)
 
@@ -52,6 +50,11 @@ up the raw adapter before any conversion.
 - Outputs go to a run directory outside Git (`<runs>/<run>-NNN/`), never Git or the root disk.
 - Never edit code that a running job imports: edit in a worktree, merge after the run.
 - Log progress in the file's `## Log` (update ranges, mean reward, capped-turn rate, wall time).
+- Every long job (training, exams, external benchmarks) must be pollable while it runs: it streams per-item
+  progress to disk (e.g. `progress.jsonl`, labelled partial), and ships a read-only `status.sh` that prints
+  what is running, items done / total per category, and any partial numbers. Exams already stream
+  (`rloo_posttool sample`); for external harnesses write the status script before launching (example:
+  the When2Call + BFCL run's `status.sh`, recorded in `research/public-benchmarks-r5.md`).
 - Stop early only on the predeclared triggers (parity violation, non-finite value, the rolling triggers above;
   the loop stops itself, keeps the adapter and writes `stopped` into the record); record it in the Log.
 
