@@ -304,13 +304,17 @@ def gpu_check() -> dict:
                       f'train on a machine with a GPU of at least {need:g} GB')
     detail = f"{gpu['name']}: {gpu['free_gb']:.1f} GB free of {gpu['total_gb']:.1f} GB"
     if gpu['free_gb'] >= need:
-        return _check('gpu', label, True, detail)
-    if gpu['total_gb'] < need:
-        return _check('gpu', label, False, f"{gpu['name']}: {gpu['total_gb']:.1f} GB · too small to train (needs {need:g} GB)",
-                      f'train on a GPU with at least {need:g} GB of memory')
-    if gpu['holders']:
-        return _check('gpu', label, False, detail, 'free the GPU: ' + '; '.join(gpu['holders']))
-    return _check('gpu', label, False, detail, f"free {need - gpu['free_gb']:.1f} GB of GPU memory")
+        check = _check('gpu', label, True, detail)
+    elif gpu['total_gb'] < need:
+        check = _check('gpu', label, False, f"{gpu['name']}: {gpu['total_gb']:.1f} GB · too small to train (needs {need:g} GB)",
+                       f'train on a GPU with at least {need:g} GB of memory')
+    elif gpu['holders']:
+        check = _check('gpu', label, False, detail, 'free the GPU: ' + '; '.join(gpu['holders']))
+    else:
+        check = _check('gpu', label, False, detail, f"free {need - gpu['free_gb']:.1f} GB of GPU memory")
+    check['memory'] = dict(name=gpu['name'], free_gb=round(gpu['free_gb'], 1), total_gb=round(gpu['total_gb'], 1),
+                           need_gb=need)  # numbers for the screen's bar; the sentence above stays the record
+    return check
 
 
 def setup(root: Path, repo: Path) -> dict:

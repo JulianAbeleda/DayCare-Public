@@ -1,12 +1,5 @@
 ♡ DayCare                                                                  (•ᴗ•)
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│   ✓ 1  Ready       everything a run needs is here                            │
-│   ✓ 2  Predeclare  posttool-fixture-002 · 9 gates                            │
-│ ▸ ○ 3  Train       waiting to start · enter to start                         │
-│   ○ 4  Score       0 pass · 0 fail · 9 open                                  │
-│   ○ 5  Verdict     needs step 4                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────────────────────────────────────────╮
 │ 3  Train · posttool-fixture-002                                              │
 │ ⏸ waiting to start  predeclared 0 updates                                    │
 │                                                                              │
@@ -15,10 +8,17 @@
 │                                                                              │
 │ Adapter                                                                      │
 │ None yet.                                                                    │
+│                                                                              │
+│                                                                              │
+│                                                                              │
 │ enter: start, stop, the trigger window, the log                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-
-
-
+╭──────────────────────────────────────────────────────────────────────────────╮
+│   ✓ 1  Ready       everything a run needs is here                            │
+│   ✓ 2  Predeclare  posttool-fixture-002 · 9 gates                            │
+│ ▸ ○ 3  Train       waiting to start · enter to start                         │
+│   ○ 4  Score       0 pass · 0 fail · 9 open                                  │
+│   ○ 5  Verdict     needs step 4                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
  ↑↓ step · enter open · q quit                          run posttool-fixture-002

@@ -88,12 +88,70 @@ func missing(s *seam.Setup) []seam.Check {
 	return out
 }
 
+// gpuCheck is the setup's GPU memory check, or nil when the setup has none.
+func gpuCheck(s *seam.Setup) *seam.Check {
+	if s == nil {
+		return nil
+	}
+	for i := range s.Checks {
+		if s.Checks[i].ID == "gpu" {
+			return &s.Checks[i]
+		}
+	}
+	return nil
+}
+
+// gpuVerdict is the short sentence that decides whether this machine can train at all.
+func gpuVerdict(c *seam.Check) string {
+	m := c.Memory
+	switch {
+	case m == nil && strings.HasPrefix(c.Detail, "no GPU"):
+		return "no GPU found"
+	case m == nil:
+		return "the GPU could not be read"
+	case m.TotalGB < m.NeedGB:
+		return fmt.Sprintf("GPU too small: %.1f of %g GB", m.TotalGB, m.NeedGB)
+	case m.FreeGB < m.NeedGB:
+		return fmt.Sprintf("GPU busy: %.1f of %g GB free", m.FreeGB, m.NeedGB)
+	}
+	return fmt.Sprintf("GPU ok: %.1f GB free", m.FreeGB)
+}
+
+// gpuBlock is the GPU memory against what training needs, drawn first in step 1 because it decides the rest.
+func gpuBlock(c *seam.Check) string {
+	m := c.Memory
+	if m == nil {
+		return fmt.Sprintf("%s %s\n    %s", mark("fail"), stBad.Render(gpuVerdict(c)), c.Fix)
+	}
+	have := m.FreeGB
+	if m.TotalGB < m.NeedGB {
+		have = m.TotalGB
+	}
+	verdict := mark("pass") + " " + stOK.Render("enough GPU memory to train")
+	switch {
+	case m.TotalGB < m.NeedGB:
+		verdict = mark("fail") + " " + stBad.Render("not enough GPU memory to train on this machine")
+	case !c.OK:
+		verdict = mark("fail") + " " + stBad.Render("GPU memory is in use") + "  " + c.Fix
+	}
+	return fmt.Sprintf("%s  %s · %.1f GB of memory\n     %s %s\n     %s",
+		stHeader.Render("GPU"), m.Name, m.TotalGB, bar(have/m.NeedGB, 30),
+		stMuted.Render(fmt.Sprintf("%.1f of %g GB needed", have, m.NeedGB)), verdict)
+}
+
 func readyLine(f Facts) (string, string) {
 	switch {
 	case f.Setup == nil:
 		return "open", "checking…"
 	case f.Setup.Ready:
 		return "pass", "everything a run needs is here"
+	}
+	if g := gpuCheck(f.Setup); g != nil && !g.OK {
+		text := gpuVerdict(g)
+		if n := len(missing(f.Setup)) - 1; n > 0 {
+			text += fmt.Sprintf(" · %d more missing", n)
+		}
+		return "fail", text
 	}
 	return "fail", fmt.Sprintf("%d things missing · enter shows each fix", len(missing(f.Setup)))
 }
@@ -103,14 +161,20 @@ func readyBody(f Facts) string {
 		return stMuted.Render("Checking the machine…")
 	}
 	var b strings.Builder
+	if g := gpuCheck(f.Setup); g != nil {
+		b.WriteString(gpuBlock(g) + "\n\n")
+	}
 	for _, c := range missing(f.Setup) {
+		if c.ID == "gpu" {
+			continue
+		}
 		fmt.Fprintf(&b, "%s %s\n    %s %s\n", mark("fail"), c.Label, stMuted.Render("now"), stMuted.Render(c.Detail))
 		if c.Fix != "" {
 			fmt.Fprintf(&b, "    %s %s\n", stInfo.Render("fix"), c.Fix)
 		}
 	}
 	for _, c := range f.Setup.Checks {
-		if c.OK {
+		if c.OK && c.ID != "gpu" {
 			fmt.Fprintf(&b, "%s %s  %s\n", mark("pass"), c.Label, stMuted.Render(c.Detail))
 		}
 	}
@@ -192,6 +256,8 @@ func trainLine(f Facts) (string, string) {
 	switch {
 	case f.alive() || r.State == "in_progress":
 		return "run", progress
+	case r.State == "predeclared" && gpuCheck(f.Setup) != nil && !gpuCheck(f.Setup).OK:
+		return "fail", "cannot start here · " + gpuVerdict(gpuCheck(f.Setup))
 	case r.State == "predeclared":
 		return "open", "waiting to start · enter to start"
 	case r.State == "complete":
@@ -237,6 +303,9 @@ func trainActions(f Facts) []action {
 	case f.alive():
 		return []action{{"Stop the run (x)", "stop", ""}}
 	case f.Run != nil && f.Run.State == "predeclared" && len(f.Run.GateTable) > 0:
+		if g := gpuCheck(f.Setup); g != nil && !g.OK {
+			return nil // the seam would refuse; step 1 says why
+		}
 		return []action{{"Start training", "start", ""}}
 	}
 	return nil

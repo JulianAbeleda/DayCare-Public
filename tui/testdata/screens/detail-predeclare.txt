@@ -1,13 +1,21 @@
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │ 2  Predeclare · posttool-fixture-001                                         │
+│ hypothesis From stock, the run-5 recipe lifts held-out repair without more b │
+│ record research/rloo-posttool-fixture-001.md                                 │
+│ predeclared 2026-10-08T00:00:00+0000                                         │
+│ recipe rloo_posttool train --categories repair relay blocked --mix repair=0. │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ What next                                                                    │
 │ posttool-fixture-001 · 9 gates                                               │
 │ ▸ New run from the run5 recipe                                               │
 │   Open run posttool-fixture-001  stopped by a trigger  shown                 │
 │   Open run posttool-fixture-002  waiting to start                            │
 │   Open run posttool-fixture-003  in progress                                 │
-│                                                                              │
-│ hypothesis From stock, the run-5 recipe lifts held-out repair without more … │
-│ record research/rloo-posttool-fixture-001.md                                 │
-│ predeclared 2026-10-08T00:00:00+0000                                         │
-│ recipe rloo_posttool train --categories repair relay blocked --mix repair=0… │
 ╰──────────────────────────────────────────────────────────────────────────────╯

@@ -1,24 +1,24 @@
 ♡ DayCare                                                               ⠋ (•̀ᴗ•́)✧
 ╭──────────────────────────────────────────────────────────────────────────────╮
+│ 2  Predeclare · posttool-fixture-003                                         │
+│ record research/posttool-loop-iteration-speed.md                             │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│ x stop · enter: pick a run, or a new one from the run5 recipe                │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
 │   ✓ 1  Ready       everything a run needs is here                            │
 │ ▸ ⚠ 2  Predeclare  posttool-fixture-003 · no predeclaration in this folder   │
 │   ● 3  Train       █░░░░░░░░░ 2 of 20                                        │
 │   ○ 4  Score       needs step 2                                              │
 │   ○ 5  Verdict     needs step 4                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────────────────────────────────────────╮
-│ 2  Predeclare · posttool-fixture-003                                         │
-│ record research/posttool-loop-iteration-speed.md                             │
-│ x stop · enter: pick a run, or a new one from the run5 recipe                │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-
-
-
-
-
-
-
-
 
  ↑↓ step · enter open · q quit                          run posttool-fixture-003

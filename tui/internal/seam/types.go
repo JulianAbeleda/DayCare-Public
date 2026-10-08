@@ -10,6 +10,15 @@ type Check struct {
 	Detail   string  `json:"detail"`
 	Fix      string  `json:"fix"`
 	Generate *string `json:"generate"`
+	// Memory is set on the gpu check only: the numbers behind its sentence, for the screen's bar.
+	Memory *Memory `json:"memory"`
+}
+
+type Memory struct {
+	Name    string  `json:"name"`
+	FreeGB  float64 `json:"free_gb"`
+	TotalGB float64 `json:"total_gb"`
+	NeedGB  float64 `json:"need_gb"`
 }
 
 type Setup struct {

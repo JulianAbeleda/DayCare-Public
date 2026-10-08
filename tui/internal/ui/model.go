@@ -364,8 +364,7 @@ func (m Model) actions() []action {
 
 func (m Model) key(msg tea.KeyMsg) (Model, tea.Cmd) {
 	if m.open {
-		m.view.Width, m.view.Height = m.width, m.height-3
-		m.view.SetContent(DetailView(m.f, m.cursor, m.row, m.width))
+		DetailView(m.f, m.cursor, m.row, m.width, m.height-3, &m.view) // size the scroll before keys move it
 	}
 	switch {
 	case key.Matches(msg, keyQuit):
@@ -464,9 +463,7 @@ func (m Model) View() string {
 	var body string
 	if m.open {
 		view := m.view
-		view.Width, view.Height = m.width, room
-		view.SetContent(DetailView(m.f, m.cursor, m.row, m.width))
-		body = view.View()
+		body = DetailView(m.f, m.cursor, m.row, m.width, room, &view)
 	} else {
 		body = ChecklistView(m.f, m.cursor, m.width, room)
 		if pad := room - lipgloss.Height(body); pad > 0 {

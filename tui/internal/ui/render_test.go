@@ -3,6 +3,7 @@ package ui
 import (
 	"encoding/json"
 	"flag"
+	"github.com/charmbracelet/bubbles/viewport"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/muesli/termenv"
 
 	"github.com/JulianAbeleda/DayCare/tui/internal/jobs"
@@ -135,11 +137,11 @@ func TestScreensPlain(t *testing.T) {
 		"checklist-training.txt":    running.View(),
 		"checklist-not-ready.txt":   notReady.View(),
 		"score-form-80x24.txt":      scoring.View(),
-		"detail-ready.txt":          DetailView(facts(notReady), 0, 0, 80),
-		"detail-predeclare.txt":     DetailView(facts(stopped), 1, 0, 80),
-		"detail-train.txt":          DetailView(facts(stopped), 2, 0, 80),
-		"detail-score.txt":          DetailView(facts(stopped), 3, 0, 80),
-		"detail-verdict.txt":        DetailView(facts(stopped), 4, 0, 80),
+		"detail-ready.txt":          detail(facts(notReady), 0),
+		"detail-predeclare.txt":     detail(facts(stopped), 1),
+		"detail-train.txt":          detail(facts(stopped), 2),
+		"detail-score.txt":          detail(facts(stopped), 3),
+		"detail-verdict.txt":        detail(facts(stopped), 4),
 	} {
 		golden(t, name, got)
 	}
@@ -154,7 +156,7 @@ func TestScreensStyled(t *testing.T) {
 	stopped := program(s, ready(), &s.stopped, nil, nil)
 	golden(t, "styled/checklist-stopped.ansi", stopped.View())
 	golden(t, "styled/checklist-not-ready.ansi", program(s, setupSample(), nil, nil, nil).View())
-	golden(t, "styled/detail-score.ansi", DetailView(facts(stopped), 3, 0, 80))
+	golden(t, "styled/detail-score.ansi", detail(facts(stopped), 3))
 }
 
 // Every frame fits 80x24: 24 lines, none wider than 80 cells.
@@ -244,4 +246,36 @@ func TestKeysAndForms(t *testing.T) {
 	if len(verdictActions(Facts{Run: &scored})) != 1 {
 		t.Fatal("the adopt row appears when every gate is scored")
 	}
+}
+
+func TestGPUVerdictLeadsStepOne(t *testing.T) {
+	small := seam.Check{ID: "gpu", Detail: "Apple M3: 11.8 GB · too small to train (needs 30 GB)",
+		Memory: &seam.Memory{Name: "Apple M3", FreeGB: 11.8, TotalGB: 11.8, NeedGB: 30}}
+	busy := seam.Check{ID: "gpu", Fix: "free the GPU: llama-server (pid 2976) holds 27.6 GB",
+		Memory: &seam.Memory{Name: "RTX 5090", FreeGB: 3.8, TotalGB: 31.8, NeedGB: 30}}
+	none := seam.Check{ID: "gpu", Detail: "no GPU found on this machine"}
+	other := seam.Check{ID: "model", Label: "DAYCARE_BASE_GGUF is a file"}
+	for _, tc := range []struct {
+		gpu        seam.Check
+		line, body string
+	}{
+		{small, "GPU too small: 11.8 of 30 GB · 1 more missing", "not enough GPU memory to train on this machine"},
+		{busy, "GPU busy: 3.8 of 30 GB free · 1 more missing", "llama-server (pid 2976) holds 27.6 GB"},
+		{none, "no GPU found · 1 more missing", "no GPU found"},
+	} {
+		f := Facts{Setup: &seam.Setup{Checks: []seam.Check{other, tc.gpu}}}
+		if _, line := readyLine(f); line != tc.line {
+			t.Errorf("line %q, want %q", line, tc.line)
+		}
+		body := ansi.Strip(readyBody(f))
+		if !strings.Contains(strings.SplitN(body, "\n\n", 2)[0], tc.body) {
+			t.Errorf("the GPU block does not lead step 1 with %q:\n%s", tc.body, body)
+		}
+	}
+}
+
+// detail renders the open view the way the 80x24 screen does: 21 rows under the header, note and footer.
+func detail(f Facts, i int) string {
+	v := viewport.New(0, 0)
+	return DetailView(f, i, 0, 80, 21, &v)
 }

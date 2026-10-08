@@ -4,6 +4,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/charmbracelet/bubbles/viewport"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -199,43 +200,59 @@ func title(i int, f Facts) string {
 }
 
 // ChecklistView is the main screen: the five steps, then the chosen step's summary cut to fit `height` lines.
+// ChecklistView fills the screen: the chosen step's results on top, stretched to the height, and the five steps
+// pinned at the bottom where the keys act.
 func ChecklistView(f Facts, cursor, width, height int) string {
 	lines := make([]string, len(steps))
 	for i := range steps {
 		lines[i] = truncate(listLine(i, f, i == cursor), width-4)
 	}
 	list := stBox.Width(width - 2).Render(strings.Join(lines, "\n"))
-	s := steps[cursor]
-	room := max(height-lipgloss.Height(list)-3, 2)
-	body := strings.Split(s.body(f), "\n")
-	if len(body) > room-1 {
-		body = append(body[:room-2], stMuted.Render("…"))
-	}
-	hint := s.hint
+	hint := steps[cursor].hint
 	if f.alive() {
 		hint = "x stop · " + hint
 	}
-	return list + "\n" + box(title(cursor, f), strings.Join(body, "\n")+"\n"+stMuted.Render(hint), width, false)
+	room := max(height-lipgloss.Height(list)-3, 2) // the results box: two borders and its title
+	body := fill(strings.Split(steps[cursor].body(f), "\n"), room-1)
+	return box(title(cursor, f), strings.Join(body, "\n")+"\n"+stMuted.Render(hint), width, false) + "\n" + list
 }
 
-// DetailView is one step's full view: its action rows (or the open form) first, then the whole body.
-func DetailView(f Facts, i, row, width int) string {
+// fill cuts or pads lines to exactly n, ending a cut with "…", so the boxes always span the screen.
+func fill(lines []string, n int) []string {
+	if len(lines) > n {
+		return append(lines[:max(n-1, 0)], stMuted.Render("…"))
+	}
+	return append(lines, make([]string, n-len(lines))...)
+}
+
+// DetailBody is one step's whole result, the part that scrolls on top of the open view.
+func DetailBody(f Facts, i int) string { return steps[i].body(f) }
+
+// DetailActions is the bottom of the open view: the step's line, then its action rows or the open form.
+func DetailActions(f Facts, i, row, width int) string {
 	var b strings.Builder
 	_, text := steps[i].line(f)
-	b.WriteString(text + "\n")
+	b.WriteString(text)
 	if f.Form != nil {
-		b.WriteString(formView(*f.Form))
+		b.WriteString("\n" + strings.TrimRight(formView(*f.Form), "\n"))
 	} else if steps[i].actions != nil {
 		for j, a := range steps[i].actions(f) {
 			if j == row {
-				b.WriteString(stCursor.Render("▸ ") + a.label + "\n")
+				b.WriteString("\n" + stCursor.Render("▸ ") + a.label)
 			} else {
-				b.WriteString("  " + a.label + "\n")
+				b.WriteString("\n  " + a.label)
 			}
 		}
 	}
-	b.WriteString("\n" + steps[i].body(f))
-	return box(title(i, f), b.String(), width, false)
+	return box("What next", b.String(), width, false)
+}
+
+// DetailView is the open view at a given height: results on top in a fixed box, actions at the bottom.
+func DetailView(f Facts, i, row, width, height int, scroll *viewport.Model) string {
+	actions := DetailActions(f, i, row, width)
+	scroll.Width, scroll.Height = width-4, max(height-lipgloss.Height(actions)-3, 1)
+	scroll.SetContent(DetailBody(f, i))
+	return box(title(i, f), scroll.View(), width, false) + "\n" + actions
 }
 
 func formView(form Form) string {

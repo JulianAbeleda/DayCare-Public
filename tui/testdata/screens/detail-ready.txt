@@ -1,16 +1,21 @@
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │ 1  Ready                                                                     │
-│ 3 things missing · enter shows each fix                                      │
-│ ▸ Generate the predeclaration                                                │
-│                                                                              │
 │ ✗ DAYCARE_BASE_GGUF is a file                                                │
 │     now unset                                                                │
-│     fix convert Nemotron 3 Nano 4B to a BF16 GGUF (docs/rl-training.md); ex… │
+│     fix convert Nemotron 3 Nano 4B to a BF16 GGUF (docs/rl-training.md); exp │
 │ ✗ DAYCARE_ENVELOPE is the captured GameTerm request record                   │
 │     now unset                                                                │
-│     fix the envelope is captured from GameTerm (docs/rl-training.md); it ca… │
+│     fix the envelope is captured from GameTerm (docs/rl-training.md); it can │
 │ ✗ a predeclared run is waiting to start                                      │
 │     now none                                                                 │
-│     fix python -m daycare.harness.runs predeclare --root <runs>/<run> --pro… │
+│     fix python -m daycare.harness.runs predeclare --root <runs>/<run> --prot │
 │ ✓ numpy importable  /usr/bin/python3                                         │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────────────────────────────────╮
+│ What next                                                                    │
+│ 3 things missing · enter shows each fix                                      │
+│ ▸ Generate the predeclaration                                                │
 ╰──────────────────────────────────────────────────────────────────────────────╯
