@@ -242,8 +242,13 @@ class NemotronHMamba2:
         normalized = normalized.reshape(batch, length, cfg.ssm_inner) * self.ssm_norm.weight.reshape(cfg.ssm_inner)
         return self.ssm_out(normalized.cast(hidden.dtype))
 
-    def cached(self, hidden: Tensor, cache: dict | None = None) -> tuple[Tensor, dict]:
-        """Run only new tokens and carry convolution plus recurrent state."""
+    def cached(self, hidden: Tensor, cache: dict | None = None, *,
+               keep_graph: bool = False) -> tuple[Tensor, dict]:
+        """Run only new tokens and carry convolution plus recurrent state.
+
+        `keep_graph` skips every realize so gradients reach the incoming state
+        and the weights (segment-wise training); realize severs autograd.
+        """
         cfg = self.config
         batch, length, _ = hidden.shape
         projected = self.ssm_in(hidden)
@@ -252,7 +257,11 @@ class NemotronHMamba2:
         previous_conv = None if cache is None else cache["conv"]
         combined = raw_xbc if previous_conv is None else previous_conv.cat(raw_xbc, dim=1)
         xbc = NemotronHMamba2._causal_conv(self, combined)[:, -length:]
-        conv_tail = combined[:, -(cfg.conv_kernel - 1):].realize()
+        conv_tail = combined[:, -(cfg.conv_kernel - 1):]
+        if not keep_graph:
+            # contiguous: a realized slice is a view that keeps the whole
+            # prefix-length buffer alive (about 14 GB over a 10k-token prefix).
+            conv_tail = conv_tail.contiguous().realize()
         x, b, c = xbc.split(
             (cfg.ssm_inner, cfg.ssm_groups * cfg.ssm_state, cfg.ssm_groups * cfg.ssm_state), dim=-1
         )
@@ -272,9 +281,10 @@ class NemotronHMamba2:
         # The prefix projection spans ~10k tokens. Materialize it before the
         # scan so tinygrad does not fuse that full graph into every small
         # recurrent chunk's CUDA kernel.
-        gate, x, b, c, log_a, x_dt = (
-            value.realize() for value in (gate, x, b, c, log_a, x_dt)
-        )
+        if not keep_graph:
+            gate, x, b, c, log_a, x_dt = (
+                value.realize() for value in (gate, x, b, c, log_a, x_dt)
+            )
         state = cache["state"] if cache is not None else Tensor.zeros(
             batch, cfg.ssm_heads, cfg.ssm_inner // cfg.ssm_heads, cfg.ssm_state,
             device=hidden.device,
@@ -286,7 +296,8 @@ class NemotronHMamba2:
                 self, x_dt[:, start:stop], b[:, start:stop], c[:, start:stop],
                 log_a[:, start:stop], state,
             )
-            output, state = output.realize(), state.realize()
+            if not keep_graph:
+                output, state = output.realize(), state.realize()
             outputs.append(output)
         y = outputs[0]
         for output in outputs[1:]:
@@ -411,15 +422,19 @@ class NemotronHBlock:
             mixed = NemotronHMLP.__call__(self, normalized, retain_graph=retain_graph)
         return hidden + mixed.cast(hidden.dtype)
 
-    def cached(self, hidden: Tensor, cache: dict | None = None) -> tuple[Tensor, dict | None]:
+    def cached(self, hidden: Tensor, cache: dict | None = None, *,
+               keep_graph: bool = False) -> tuple[Tensor, dict | None]:
         normalized = self.attn_norm(hidden)
         if self.block_type == "mamba":
-            mixed, next_cache = NemotronHMamba2.cached(self, normalized, cache)
+            mixed, next_cache = NemotronHMamba2.cached(self, normalized, cache, keep_graph=keep_graph)
         elif self.block_type == "attention":
+            if keep_graph:
+                raise ValueError("segment-wise gradients are implemented for Mamba and MLP blocks only")
             mixed, next_cache = NemotronHAttention.cached(self, normalized, cache)
         else:
             mixed, next_cache = NemotronHMLP.__call__(self, normalized), None
-        return (hidden + mixed.cast(hidden.dtype)).realize(), next_cache
+        out = hidden + mixed.cast(hidden.dtype)
+        return (out if keep_graph else out.realize()), next_cache
 
 
 class NemotronHModel:
@@ -430,23 +445,37 @@ class NemotronHModel:
         self.output_norm = nn.RMSNorm(config.dim, config.norm_eps)
         self.output = nn.Linear(config.dim, config.vocab_size, bias=False)
 
-    def prime(self, ids: list[int], *, through: int) -> list[dict | None]:
-        """Cache one shared causal prefix through the requested frozen layer."""
-        hidden = self.token_embd(Tensor([ids])).realize()
+    def prefix(self, ids: list[int], *, through: int) -> tuple[Tensor, list[dict | None]]:
+        """Run one shared causal prefix once: its states after `through`, and the caches."""
+        # float32 residual stream, as in the whole-sequence path (bf16 drifted ~0.3% per layer)
+        hidden = self.token_embd(Tensor([ids])).float().realize()
         caches = []
         for block in self.blk[:through + 1]:
             hidden, cache = block.cached(hidden)
             caches.append(cache)
-        return caches
+        return hidden, caches
+
+    def prime(self, ids: list[int], *, through: int) -> list[dict | None]:
+        """Cache one shared causal prefix through the requested frozen layer."""
+        return self.prefix(ids, through=through)[1]
 
     def suffix(self, ids: list[int], caches: list[dict | None], *, through: int) -> Tensor:
         """Propagate a short suffix against immutable shared-prefix caches."""
         if len(caches) != through + 1:
             raise ValueError("prefix cache depth does not match requested frozen stack")
-        hidden = self.token_embd(Tensor([ids])).realize()
+        return self.advance(ids, caches, through=through)[0]
+
+    def advance(self, ids: list[int], caches: list[dict | None], *, through: int):
+        """Advance immutable frozen-prefix state and return the new token states."""
+        if not ids or len(caches) != through + 1:
+            raise ValueError("nonempty tokens and matching cache depth required")
+        # float32 residual stream, as in the whole-sequence path (bf16 drifted ~0.3% per layer)
+        hidden = self.token_embd(Tensor([ids])).float().realize()
+        next_caches = []
         for index, block in enumerate(self.blk[:through + 1]):
-            hidden, _ = block.cached(hidden, caches[index])
-        return hidden
+            hidden, cache = block.cached(hidden, caches[index])
+            next_caches.append(cache)
+        return hidden, next_caches
 
 
 def load_state(metadata: dict, state: dict[str, Tensor], *, max_context: int | None = None,
