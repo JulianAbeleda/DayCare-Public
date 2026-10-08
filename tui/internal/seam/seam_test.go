@@ -129,3 +129,16 @@ func TestLiveSeamMatchesPinnedContract(t *testing.T) {
 		t.Fatalf("want a seam Error with code 1, got %#v", err)
 	}
 }
+
+func TestCallNamesAMissingModule(t *testing.T) {
+	fake := filepath.Join(t.TempDir(), "python")
+	script := "#!/bin/sh\necho \"ModuleNotFoundError: No module named 'numpy.core'\" >&2\nexit 1\n"
+	if err := os.WriteFile(fake, []byte(script), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	_, err := Client{Python: fake, Repo: t.TempDir()}.Call("list")
+	want := fake + " has no numpy. Run `" + fake + " -m pip install numpy`, or pass -python with an interpreter that has it."
+	if err == nil || err.Error() != want {
+		t.Fatalf("got %v, want %q", err, want)
+	}
+}

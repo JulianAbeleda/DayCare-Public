@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -57,9 +58,16 @@ func (c Client) Call(args ...string) ([]byte, error) {
 	if json.Unmarshal(out.Bytes(), &reported) == nil && reported.Error != "" {
 		return nil, &Error{Message: reported.Error, Stderr: stderr.String(), Code: code}
 	}
+	if m := missingModule.FindStringSubmatch(stderr.String()); m != nil {
+		return nil, &Error{Message: fmt.Sprintf("%s has no %s. Run `%s -m pip install %s`, or pass -python with an interpreter that has it.",
+			c.Python, m[1], c.Python, m[1]), Stderr: stderr.String(), Code: code}
+	}
 	return nil, &Error{Message: fmt.Sprintf("%s -m daycare.harness.runs %s: %v", c.Python, strings.Join(args, " "), err),
 		Stderr: stderr.String(), Code: code}
 }
+
+// missingModule finds the top-level package in Python's import failure, so the screen can name the fix.
+var missingModule = regexp.MustCompile(`ModuleNotFoundError: No module named '([A-Za-z0-9_]+)`)
 
 func (c Client) decode(v any, args ...string) ([]byte, error) {
 	raw, err := c.Call(args...)
